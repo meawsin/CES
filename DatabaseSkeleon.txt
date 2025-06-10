@@ -1,0 +1,331 @@
+CREATE DATABASE CourseEvaluationSystem;
+USE CourseEvaluationSystem;
+
+-- Students Table: Merged with student_records, added enrollment_date, department, and profile picture
+CREATE TABLE students (
+    student_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL DEFAULT '1234',
+    contact_no VARCHAR(20) DEFAULT NULL,
+    dob DATE DEFAULT NULL,
+    gender ENUM('male', 'female') DEFAULT NULL,
+    session VARCHAR(20) DEFAULT NULL,
+    batch VARCHAR(20) DEFAULT NULL,
+    enrollment_date DATE NOT NULL,
+    department VARCHAR(100) NOT NULL,
+    cgpa DECIMAL(3,2) DEFAULT NULL,
+    behavioral_records TEXT DEFAULT NULL,
+    profile_picture VARCHAR(255) DEFAULT NULL, -- Stores URL or path to profile picture
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Faculty Table: Dedicated table for faculty, added joining_date and profile picture
+CREATE TABLE faculty (
+    faculty_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL DEFAULT '1234',
+    contact_no VARCHAR(20) DEFAULT NULL,
+    dob DATE DEFAULT NULL,
+    gender ENUM('male', 'female') DEFAULT NULL,
+    joining_date DATE NOT NULL,
+    profile_picture VARCHAR(255) DEFAULT NULL, -- Stores URL or path to profile picture
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Admins Table: Merged with admin_permissions, simplified structure
+CREATE TABLE admins (
+    admin_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    contact_no VARCHAR(20) DEFAULT NULL,
+    can_create_templates BOOLEAN DEFAULT FALSE,
+    can_view_reports BOOLEAN DEFAULT FALSE,
+    can_manage_users BOOLEAN DEFAULT FALSE,
+    can_manage_courses BOOLEAN DEFAULT FALSE,
+    can_manage_complaints BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Courses Table: Stores course information
+CREATE TABLE courses (
+    course_code VARCHAR(20) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    status ENUM('ongoing', 'finished', 'upcoming') NOT NULL,
+    creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Course_Faculty Table: Junction table for course-faculty assignments
+CREATE TABLE course_faculty (
+    course_code VARCHAR(20),
+    faculty_id BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (course_code, faculty_id),
+    FOREIGN KEY (course_code) REFERENCES courses(course_code) ON DELETE CASCADE,
+    FOREIGN KEY (faculty_id) REFERENCES faculty(faculty_id) ON DELETE CASCADE
+);
+
+-- Course_Student Table: Junction table for course-student or batch assignments
+CREATE TABLE course_student (
+    course_code VARCHAR(20) NOT NULL,
+    student_id BIGINT DEFAULT NULL,
+    batch VARCHAR(20) DEFAULT NULL, -- Allows batch-level enrollment
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (course_code, student_id, batch),
+    FOREIGN KEY (course_code) REFERENCES courses(course_code) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE SET NULL
+);
+
+-- Evaluation_Templates Table: Stores evaluation form templates
+CREATE TABLE evaluation_templates (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    questions_set JSON NOT NULL,
+    batch VARCHAR(20) DEFAULT NULL,
+    course_code VARCHAR(20) DEFAULT NULL,
+    last_date DATE NOT NULL,
+    admin_id BIGINT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (course_code) REFERENCES courses(course_code) ON DELETE SET NULL,
+    FOREIGN KEY (admin_id) REFERENCES admins(admin_id) ON DELETE SET NULL
+);
+
+-- Evaluations Table: Stores submitted evaluation responses
+CREATE TABLE evaluations (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    course_code VARCHAR(20) NOT NULL,
+    template_id BIGINT NOT NULL,
+    feedback JSON NOT NULL,
+    comment TEXT DEFAULT NULL,
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (course_code) REFERENCES courses(course_code) ON DELETE CASCADE,
+    FOREIGN KEY (template_id) REFERENCES evaluation_templates(id) ON DELETE CASCADE
+);
+
+-- Evaluation_Completion Table: Tracks completion status without identifying submitters
+CREATE TABLE evaluation_completion (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    template_id BIGINT NOT NULL,
+    course_code VARCHAR(20) NOT NULL,
+    student_id BIGINT NOT NULL,
+    is_completed BOOLEAN DEFAULT FALSE NOT NULL,
+    completion_date TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (template_id) REFERENCES evaluation_templates(id) ON DELETE CASCADE,
+    FOREIGN KEY (course_code) REFERENCES courses(course_code) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
+);
+
+-- Complaints Table: Stores student complaints with status tracking
+CREATE TABLE complaints (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    student_id BIGINT DEFAULT NULL,
+    course_code VARCHAR(20) DEFAULT NULL,
+    issue_type VARCHAR(50) NOT NULL,
+    details TEXT NOT NULL,
+    status ENUM('pending', 'in_progress', 'resolved') DEFAULT 'pending' NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE SET NULL,
+    FOREIGN KEY (course_code) REFERENCES courses(course_code) ON DELETE SET NULL
+);
+
+-- Notices Table: Stores notices created by admins
+CREATE TABLE notices (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    admin_id BIGINT DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES admins(admin_id) ON DELETE SET NULL
+);
+
+-- App_Settings Table: Stores admin-specific application settings
+CREATE TABLE app_settings (
+    admin_id BIGINT PRIMARY KEY,
+    font_size ENUM('small', 'medium', 'large') DEFAULT 'medium' NOT NULL,
+    theme ENUM('light', 'dark') DEFAULT 'light' NOT NULL,
+    auto_logout_minutes INT DEFAULT 30 NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES admins(admin_id) ON DELETE CASCADE
+);
+
+
+
+
+
+
+populate:
+
+USE CourseEvaluationSystem;
+
+
+-- Insert into students table: 32 students across various departments and batches
+INSERT INTO students (student_id, name, email, password, contact_no, dob, gender, session, batch, enrollment_date, department, created_at, updated_at)
+VALUES 
+    (2254901009, 'Abd Al Mohsin Siraj', 'mohsinsrj03@gmail.com', '1234', '01234567890', '2003-06-04', 'male', '2021-22', 'BICE-22', '2021-09-01', 'ICT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254901085, 'Nishat Tasneem', 'tasnimrinvy@gmail.com', '1234', '01234567890', '2003-09-05', 'female', '2021-22', 'BICE-22', '2021-09-01', 'ICT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254902001, 'Rahim Khan', 'rahimkhan@gmail.com', '1234', '01712345678', '2002-03-15', 'male', '2020-21', 'BICE-21', '2020-08-15', 'ICT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254902002, 'Ayesha Siddika', 'ayeshasiddika@gmail.com', '1234', '01987654321', '2002-07-22', 'female', '2020-21', 'BICE-21', '2020-08-15', 'ICT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254902003, 'Samiul Islam', 'samiulislam@gmail.com', '1234', '01678901234', '2001-11-10', 'male', '2020-21', 'BICE-21', '2020-08-15', 'ICT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254903001, 'Fatima Begum', 'fatimabegum@gmail.com', '1234', '01823456789', '2004-01-12', 'female', '2022-23', 'BCSE-23', '2022-09-01', 'CSE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254903002, 'Arif Hossain', 'arifhossain@gmail.com', '1234', '01567890123', '2003-12-05', 'male', '2022-23', 'BCSE-23', '2022-09-01', 'CSE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254903003, 'Nadia Rahman', 'nadiarahman@gmail.com', '1234', '01789012345', '2004-04-18', 'female', '2022-23', 'BCSE-23', '2022-09-01', 'CSE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254903004, 'Kamal Uddin', 'kamaluddin@gmail.com', '1234', '01901234567', '2003-08-09', 'male', '2022-23', 'BCSE-23', '2022-09-01', 'CSE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254903005, 'Sabrina Akter', 'sabrinaakter@gmail.com', '1234', '01623456789', '2004-02-25', 'female', '2022-23', 'BCSE-23', '2022-09-01', 'CSE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254904001, 'Tarek Ahmed', 'tarekahmed@gmail.com', '1234', '01834567890', '2002-06-30', 'male', '2021-22', 'BBA-22', '2021-09-01', 'BBA', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254904002, 'Laila Khan', 'lailakhan@gmail.com', '1234', '01745678901', '2003-03-14', 'female', '2021-22', 'BBA-22', '2021-09-01', 'BBA', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254904003, 'Rashedul Islam', 'rashedulislam@gmail.com', '1234', '01956789012', '2002-09-20', 'male', '2021-22', 'BBA-22', '2021-09-01', 'BBA', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254904004, 'Mim Akhter', 'mimakhter@gmail.com', '1234', '01578901234', '2003-05-17', 'female', '2021-22', 'BBA-22', '2021-09-01', 'BBA', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254905001, 'Zubair Hossain', 'zubairhossain@gmail.com', '1234', '01689012345', '2004-07-11', 'male', '2022-23', 'MCJ-23', '2022-09-01', 'MCJ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254905002, 'Shirin Sultana', 'shirinsultana@gmail.com', '1234', '01801234567', '2004-10-03', 'female', '2022-23', 'MCJ-23', '2022-09-01', 'MCJ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254905003, 'Asif Rahman', 'asifrahman@gmail.com', '1234', '01712345678', '2003-12-28', 'male', '2022-23', 'MCJ-23', '2022-09-01', 'MCJ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254906001, 'Rima Begum', 'rimabegum@gmail.com', '1234', '01923456789', '2002-04-15', 'female', '2020-21', 'AIS-21', '2020-08-15', 'AIS', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254906002, 'Omar Faruk', 'omarfaruk@gmail.com', '1234', '01534567890', '2002-08-22', 'male', '2020-21', 'AIS-21', '2020-08-15', 'AIS', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254906003, 'Sadia Islam', 'sadiaislam@gmail.com', '1234', '01645678901', '2002-11-09', 'female', '2020-21', 'AIS-21', '2020-08-15', 'AIS', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254907001, 'Imran Khan', 'imrankhan@gmail.com', '1234', '01856789012', '2003-06-18', 'male', '2021-22', 'FIN-22', '2021-09-01', 'FIN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254907002, 'Nusrat Jahan', 'nusratjahan@gmail.com', '1234', '01767890123', '2003-09-25', 'female', '2021-22', 'FIN-22', '2021-09-01', 'FIN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254907003, 'Hasan Mahmud', 'hasanmahmud@gmail.com', '1234', '01978901234', '2002-12-12', 'male', '2021-22', 'FIN-22', '2021-09-01', 'FIN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254908001, 'Afsana Akter', 'afsanaakter@gmail.com', '1234', '01589012345', '2004-02-14', 'female', '2022-23', 'MGT-23', '2022-09-01', 'MGT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254908002, 'Rakibul Islam', 'rakibulislam@gmail.com', '1234', '01601234567', '2004-05-20', 'male', '2022-23', 'MGT-23', '2022-09-01', 'MGT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254909001, 'Tania Sultana', 'taniasultana@gmail.com', '1234', '01812345678', '2003-07-10', 'female', '2021-22', 'MKT-22', '2021-09-01', 'MKT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254909002, 'Shakil Ahmed', 'shakilahmed@gmail.com', '1234', '01723456789', '2003-10-15', 'male', '2021-22', 'MKT-22', '2021-09-01', 'MKT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254910001, 'Liza Rahman', 'lizarahman@gmail.com', '1234', '01934567890', '2002-03-22', 'female', '2020-21', 'ES-21', '2020-08-15', 'ES', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254910002, 'Arnob Khan', 'arnobkhan@gmail.com', '1234', '01545678901', '2002-06-18', 'male', '2020-21', 'ES-21', '2020-08-15', 'ES', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254911001, 'Saima Akter', 'saimaakter@gmail.com', '1234', '01656789012', '2004-08-12', 'female', '2022-23', 'Law-23', '2022-09-01', 'Law', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254912001, 'Rohan Islam', 'rohanislam@gmail.com', '1234', '01867890123', '2003-11-05', 'male', '2021-22', 'PCHR-22', '2021-09-01', 'PCHR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (2254912002, 'Mishu Begum', 'mishubegum@gmail.com', '1234', '01778901234', '2003-02-28', 'female', '2021-22', 'PCHR-22', '2021-09-01', 'PCHR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+
+-- Insert into faculty table: 11 faculty members
+INSERT INTO faculty (faculty_id, name, email, password, contact_no, dob, gender, joining_date, profile_picture, created_at, updated_at)
+VALUES 
+    (1234, 'Sazzadul Islam', 'sazzadulislam@bup.com', '1234', NULL, NULL, NULL, '2015-06-01', 'images/faculty/sazzadul.jpg', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (1235, 'Dr. Amina Rahman', 'aminarahman@bup.com', '1234', '01712345678', '1975-04-12', 'female', '2016-08-15', 'images/faculty/amina.jpg', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (1236, 'Prof. Kamal Hossain', 'kamalhossain@bup.com', '1234', '01987654321', '1968-09-20', 'male', '2014-03-10', 'images/faculty/kamal.jpg', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (1237, 'Dr. Farida Begum', 'faridabegum@bup.com', '1234', '01678901234', '1980-11-05', 'female', '2017-01-22', 'images/faculty/farida.jpg', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (1238, 'Asif Iqbal', 'asifiqbal@bup.com', '1234', '01823456789', '1978-06-18', 'male', '2015-09-01', 'images/faculty/asif.jpg', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (1239, 'Dr. Nusrat Jahan', 'nusratjahan@bup.com', '1234', '01567890123', '1982-03-25', 'female', '2018-07-10', 'images/faculty/nusrat.jpg', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (1240, 'Prof. Rahim Uddin', 'rahimuddin@bup.com', '1234', '01789012345', '1970-12-15', 'male', '2013-05-12', 'images/faculty/rahim.jpg', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (1241, 'Sadia Khan', 'sadiakhan@bup.com', '1234', '01901234567', '1985-08-09', 'female', '2019-02-18', 'images/faculty/sadia.jpg', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (1242, 'Dr. Imran Hossain', 'imranhossain@bup.com', '1234', '01623456789', '1976-04-30', 'male', '2016-11-01', 'images/faculty/imran.jpg', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (1243, 'Prof. Laila Akhter', 'lailaakhter@bup.com', '1234', '01834567890', '1972-07-22', 'female', '2014-09-15', 'images/faculty/laila.jpg', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (1244, 'Tarek Mahmud', 'tarekmahmud@bup.com', '1234', '01745678901', '1980-10-10', 'male', '2017-03-20', 'images/faculty/tarek.jpg', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- Insert into admins table: 2 admins with varying permissions
+INSERT INTO admins (admin_id, name, email, password, contact_no, can_create_templates, can_view_reports, can_manage_users, can_manage_courses, can_manage_complaints, created_at, updated_at)
+VALUES 
+    (1001, 'Section Officer 1', 'so1ICT@bup.com', '1234', NULL, TRUE, TRUE, TRUE, TRUE, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (1010, 'Chairman', 'chairmanict@bup.com', '1234', NULL, FALSE, TRUE, FALSE, FALSE, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- Insert into courses table: 12 courses
+INSERT INTO courses (course_code, name, status, creation_date, updated_at)
+VALUES 
+    ('ICE-3107', 'Software & Requirement Engineering', 'ongoing', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('ICE-3108', 'Software & Requirement Engineering Lab', 'ongoing', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('CSE-2201', 'Data Structures', 'ongoing', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('CSE-2202', 'Data Structures Lab', 'upcoming', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('BBA-3101', 'Principles of Management', 'ongoing', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('BBA-3102', 'Business Communication', 'finished', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('MCJ-4101', 'Media Ethics', 'ongoing', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('AIS-2101', 'Accounting Fundamentals', 'upcoming', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('FIN-3201', 'Financial Management', 'ongoing', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('MGT-3301', 'Organizational Behavior', 'finished', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('MKT-3401', 'Marketing Principles', 'ongoing', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('LAW-4201', 'Constitutional Law', 'upcoming', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- Insert into evaluation_templates table: 1 evaluation template
+INSERT INTO evaluation_templates (title, questions_set, batch, course_code, last_date, admin_id, created_at, updated_at)
+VALUES 
+    (
+        'Course Evaluation Form 2025',
+        '{
+            "instructions": "Please rate the following statements on a scale of 1 to 5, where 1 = Strongly Disagree and 5 = Strongly Agree.",
+            "questions": [
+                {
+                    "text": "Overall, I am satisfied with the quality of this 6-month course.",
+                    "type": "rating",
+                    "options": ["1 (Strongly Disagree)", "2 (Disagree)", "3 (Neutral)", "4 ( Agree)", "5 (Strongly Agree)"]
+                },
+                {
+                    "text": "The course content was relevant and valuable to my learning goals.",
+                    "type": "rating",
+                    "options": ["1 (Strongly Disagree)", "2 (Disagree)", "3 (Neutral)", "4 ( Agree)", "5 (Strongly Agree)"]
+                },
+                {
+                    "text": "The course structure and progression over the 6 months were logical and easy to follow.",
+                    "type": "rating",
+                    "options": ["1 (Strongly Disagree)", "2 (Disagree)", "3 (Neutral)", "4 ( Agree)", "5 (Strongly Agree)"]
+                },
+                {
+                    "text": "The instructors effectively explained complex topics throughout the course.",
+                    "type": "rating",
+                    "options": ["1 (Strongly Disagree)", "2 (Disagree)", "3 (Neutral)", "4 ( Agree)", "5 (Strongly Agree)"]
+                },
+                {
+                    "text": "The instructors were generally approachable and responsive to student questions/concerns.",
+                    "type": "rating",
+                    "options": ["1 (Strongly Disagree)", "2 (Disagree)", "3 (Neutral)", "4 ( Agree)", "5 (Strongly Agree)"]
+                },
+                {
+                    "text": "The assignments and assessments throughout the course were fair and helped reinforce my learning.",
+                    "type": "rating",
+                    "options": ["1 (Strongly Disagree)", "2 (Disagree)", "3 (Neutral)", "4 ( Agree)", "5 (Strongly Agree)"]
+                },
+                {
+                    "text": "I feel that I have significantly improved my knowledge/skills in the subject area as a result of this course.",
+                    "type": "rating",
+                    "options": ["1 (Strongly Disagree)", "2 (Disagree)", "3 (Neutral)", "4 ( Agree)", "5 (Strongly Agree)"]
+                },
+                {
+                    "text": "The learning materials (e.g., lectures, readings, online resources) provided were helpful and comprehensive.",
+                    "type": "rating",
+                    "options": ["1 (Strongly Disagree)", "2 (Disagree)", "3 (Neutral)", "4 ( Agree)", "5 (Strongly Agree)"]
+                },
+                {
+                    "text": "Given the opportunity, I would recommend this course to others.",
+                    "type": "rating",
+                    "options": ["1 (Strongly Disagree)", "2 (Disagree)", "3 (Neutral)", "4 ( Agree)", "5 (Strongly Agree)"]
+                },
+                {
+                    "text": "What was the primary reason you enrolled in this course? (Select one)",
+                    "type": "multiple_choice",
+                    "options": [
+                        "A) To gain new skills for career advancement",
+                        "B) To deepen existing knowledge",
+                        "C) For personal interest/hobby",
+                        "D) Recommended by employer/institution"
+                    ]
+                },
+                {
+                    "text": "Any suggestions for the course:",
+                    "type": "text"
+                },
+                {
+                    "text": "Any feedback/message for the faculty:",
+                    "type": "text"
+                }
+            ]
+        }',
+        'BICE-22',
+        'ICE-3107',
+        '2025-07-15',
+        1001,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    );
+
+-- Insert into app_settings table: Settings for 2 admins
+INSERT INTO app_settings (admin_id, font_size, theme, auto_logout_minutes, created_at, updated_at)
+VALUES 
+    (1001, 'medium', 'light', 30, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (1010, 'large', 'dark', 15, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
