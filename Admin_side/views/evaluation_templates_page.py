@@ -1,4 +1,4 @@
-# views/evaluation_templates_page.py
+# views/evaluation_templates_page.py (Updated)
 import tkinter as tk
 from tkinter import ttk, messagebox
 from controllers.evaluation_template_controller import EvaluationTemplateController
@@ -12,10 +12,11 @@ class EvaluationTemplatesPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.parent_controller = controller
         self.template_controller = EvaluationTemplateController()
-        self.course_controller = CourseController() # To get course names for display
+        self.course_controller = CourseController()
 
         self.configure(bg="#ecf0f1")
         self.columnconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1) # Ensure treeview expands
 
         self.create_widgets()
         self.load_templates()
@@ -65,13 +66,18 @@ class EvaluationTemplatesPage(tk.Frame):
         templates = self.template_controller.get_all_templates()
         self.all_templates_data = templates # Store for internal use
 
+        # Check the provided populate script. The `evaluation_templates` table
+        # has a `last_date` of '2025-07-15'. Ensure your database is up-to-date
+        # with this or similar entries.
         for template in templates:
             self.template_tree.insert("", "end", iid=template.id, values=(
                 template.id, template.title,
                 template.course_code if template.course_code else "N/A",
                 template.batch if template.batch else "N/A",
-                template.last_date, template.admin_id
+                template.last_date.strftime("%Y-%m-%d") if template.last_date else "N/A", # Format date here
+                template.admin_id
             ))
+
 
     def open_create_template_form(self):
         admin_id = self.parent_controller.get_current_user().admin_id if self.parent_controller.get_current_user() else None
@@ -83,12 +89,13 @@ class EvaluationTemplatesPage(tk.Frame):
         form_window.title("Create New Evaluation Template")
         form_window.transient(self.parent_controller)
         form_window.grab_set()
-        form_window.geometry("800x600") # Larger window for JSON editor
+        form_window.geometry("800x600")
 
         CreateEditTemplateForm(form_window, self.template_controller, self.load_templates, admin_id=admin_id)
 
     def open_edit_template_form(self):
         selected_item = self.template_tree.focus()
+        # ADD THIS CHECK:
         if not selected_item:
             messagebox.showwarning("No Selection", "Please select a template to edit.")
             return
@@ -109,6 +116,7 @@ class EvaluationTemplatesPage(tk.Frame):
 
     def delete_selected_template(self):
         selected_item = self.template_tree.focus()
+        # ADD THIS CHECK:
         if not selected_item:
             messagebox.showwarning("No Selection", "Please select a template to delete.")
             return
@@ -125,6 +133,7 @@ class EvaluationTemplatesPage(tk.Frame):
 
     def open_assign_template_form(self):
         selected_item = self.template_tree.focus()
+        # ADD THIS CHECK:
         if not selected_item:
             messagebox.showwarning("No Selection", "Please select a base template to assign.")
             return
@@ -150,7 +159,7 @@ class EvaluationTemplatesPage(tk.Frame):
         AssignTemplateForm(
             assign_form_window,
             self.template_controller,
-            self.course_controller, # Pass course controller to get course/batch lists
+            self.course_controller,
             self.load_templates,
             source_template_id=source_template_id,
             admin_id=admin_id
@@ -158,6 +167,7 @@ class EvaluationTemplatesPage(tk.Frame):
 
     def view_template_details(self):
         selected_item = self.template_tree.focus()
+        # ADD THIS CHECK:
         if not selected_item:
             messagebox.showwarning("No Selection", "Please select a template to view details.")
             return
@@ -179,7 +189,7 @@ class EvaluationTemplatesPage(tk.Frame):
             ttk.Label(details_frame, text=f"ID: {template_data.id}").pack(anchor="w", padx=10)
             ttk.Label(details_frame, text=f"Assigned Course: {template_data.course_code if template_data.course_code else 'N/A'}").pack(anchor="w", padx=10)
             ttk.Label(details_frame, text=f"Assigned Batch: {template_data.batch if template_data.batch else 'N/A'}").pack(anchor="w", padx=10)
-            ttk.Label(details_frame, text=f"Last Date: {template_data.last_date}").pack(anchor="w", padx=10)
+            ttk.Label(details_frame, text=f"Last Date: {template_data.last_date.strftime('%Y-%m-%d') if template_data.last_date else 'N/A'}").pack(anchor="w", padx=10) # Format date
             ttk.Label(details_frame, text=f"Created by Admin ID: {template_data.admin_id}").pack(anchor="w", padx=10)
             ttk.Label(details_frame, text=f"Created At: {template_data.created_at}").pack(anchor="w", padx=10)
             ttk.Label(details_frame, text=f"Updated At: {template_data.updated_at}").pack(anchor="w", padx=10)
@@ -188,7 +198,7 @@ class EvaluationTemplatesPage(tk.Frame):
             questions_text = tk.Text(details_frame, wrap="word", height=15, width=80)
             questions_text.pack(fill="both", expand=True)
             questions_text.insert("1.0", json.dumps(template_data.questions_set, indent=2))
-            questions_text.config(state="disabled") # Make it read-only
+            questions_text.config(state="disabled")
 
             # Add Completion Status information
             ttk.Label(details_frame, text="Completion Status:", font=("Arial", 12, "bold")).pack(anchor="w", pady=(10, 5))
@@ -203,7 +213,6 @@ class EvaluationTemplatesPage(tk.Frame):
                         non_completers_str = "Non-completers (Student ID, Batch, Dept): " + \
                                              ", ".join([f"({s['student_id']}, {s['batch']}, {s['department']})"
                                                         for s in completion_status['non_completers']])
-                        # Use a text widget for potentially long list
                         non_completers_text = tk.Text(details_frame, wrap="word", height=5, width=80)
                         non_completers_text.pack(fill="x", padx=10, pady=5)
                         non_completers_text.insert("1.0", non_completers_str)

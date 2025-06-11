@@ -74,8 +74,8 @@ CREATE TABLE course_faculty (
 -- Course_Student Table: Junction table for course-student or batch assignments
 CREATE TABLE course_student (
     course_code VARCHAR(20) NOT NULL,
-    student_id BIGINT DEFAULT NULL,
-    batch VARCHAR(20) DEFAULT NULL, -- Allows batch-level enrollment
+    student_id BIGINT NOT NULL,
+    batch VARCHAR(20), -- Allows batch-level enrollment
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (course_code, student_id, batch),
     FOREIGN KEY (course_code) REFERENCES courses(course_code) ON DELETE CASCADE,
@@ -138,6 +138,8 @@ CREATE TABLE complaints (
     FOREIGN KEY (course_code) REFERENCES courses(course_code) ON DELETE SET NULL
 );
 
+ALTER TABLE complaints ADD COLUMN admin_comments TEXT DEFAULT NULL;
+
 -- Notices Table: Stores notices created by admins
 CREATE TABLE notices (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -158,6 +160,7 @@ CREATE TABLE app_settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (admin_id) REFERENCES admins(admin_id) ON DELETE CASCADE
 );
+
 
 
 

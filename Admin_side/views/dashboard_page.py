@@ -1,12 +1,16 @@
-# views/dashboard_page.py (Updated for Iteration 3)
+# views/dashboard_page.py (Updated for Iteration 4)
 import tkinter as tk
 from tkinter import ttk, messagebox
 from controllers.auth_controller import AuthController
 from views.hr_students_page import HRStudentsPage
 from views.hr_faculty_page import HRFacultyPage
 from views.hr_admins_page import HRAdminsPage
-from views.course_setup_page import CourseSetupPage             # NEW
-from views.evaluation_templates_page import EvaluationTemplatesPage # NEW
+from views.course_setup_page import CourseSetupPage
+from views.evaluation_templates_page import EvaluationTemplatesPage
+from views.reports_page import ReportsPage                 # NEW
+from views.complaints_page import ComplaintsPage           # NEW
+from views.comparison_page import ComparisonPage           # NEW
+from views.app_settings_page import AppSettingsPage        # NEW
 
 class DashboardPage(tk.Frame):
     def __init__(self, parent, controller, admin_user=None):
@@ -44,12 +48,12 @@ class DashboardPage(tk.Frame):
         nav_buttons_config = [
             ("Home", self.show_home_content),
             ("HR Management", self.show_hr_management_wrapper),
-            ("Course Setup", self.show_course_setup),          # Modified
-            ("Evaluation", self.show_evaluation_templates),   # Modified
-            ("Reports", self.show_reports),
-            ("Complaints", self.show_complaints),
-            ("Comparison", self.show_comparison),
-            ("Application settings", self.show_app_settings),
+            ("Course Setup", self.show_course_setup),
+            ("Evaluation", self.show_evaluation_templates),
+            ("Reports", self.show_reports),                     # Modified
+            ("Complaints", self.show_complaints),               # Modified
+            ("Comparison", self.show_comparison),               # Modified
+            ("Application settings", self.show_app_settings),   # Modified
         ]
 
         self.nav_buttons = []
@@ -88,11 +92,15 @@ class DashboardPage(tk.Frame):
         self.hr_notebook.add(self.hr_faculty_tab, text="Faculty")
         self.hr_notebook.add(self.hr_admins_tab, text="Admins")
 
-        # NEW: Course Setup Page
         self.sub_pages["CourseSetupPage"] = CourseSetupPage(parent=self.content_frame, controller=self.parent_controller)
-
-        # NEW: Evaluation Templates Page
         self.sub_pages["EvaluationTemplatesPage"] = EvaluationTemplatesPage(parent=self.content_frame, controller=self.parent_controller)
+
+        # NEW: Add other main pages
+        self.sub_pages["ReportsPage"] = ReportsPage(parent=self.content_frame, controller=self.parent_controller)
+        self.sub_pages["ComplaintsPage"] = ComplaintsPage(parent=self.content_frame, controller=self.parent_controller)
+        self.sub_pages["ComparisonPage"] = ComparisonPage(parent=self.content_frame, controller=self.parent_controller)
+        self.sub_pages["AppSettingsPage"] = AppSettingsPage(parent=self.content_frame, controller=self.parent_controller)
+
 
     def show_sub_page(self, page_widget):
         for widget in self.content_frame.winfo_children():
@@ -114,7 +122,7 @@ class DashboardPage(tk.Frame):
         if not self.admin_user:
             return
 
-        # Enable/disable main navigation buttons
+        # Enable/disable main navigation buttons based on admin permissions
         for btn in self.nav_buttons:
             text = btn.cget("text")
             if text == "HR Management":
@@ -128,6 +136,7 @@ class DashboardPage(tk.Frame):
             elif text == "Complaints":
                 btn.config(state="normal" if self.admin_user.can_manage_complaints else "disabled")
             # For Comparison and App Settings, assume always enabled for any admin for now
+            # You can add specific permissions for these if needed in your DB schema.
             elif text in ["Comparison", "Application settings", "Home"]:
                 btn.config(state="normal")
 
@@ -162,7 +171,7 @@ class DashboardPage(tk.Frame):
         else:
             messagebox.showwarning("Permission Denied", "You do not have permission to manage courses.")
 
-    def show_evaluation_templates(self): # Renamed for clarity
+    def show_evaluation_templates(self):
         if self.admin_user and self.admin_user.can_create_templates:
             self.show_sub_page(self.sub_pages["EvaluationTemplatesPage"])
         else:
@@ -170,24 +179,25 @@ class DashboardPage(tk.Frame):
 
     def show_reports(self):
         if self.admin_user and self.admin_user.can_view_reports:
-            messagebox.showinfo("Navigation", "Reports functionality coming soon!")
+            self.show_sub_page(self.sub_pages["ReportsPage"]) # Navigate to ReportsPage
         else:
             messagebox.showwarning("Permission Denied", "You do not have permission to view reports.")
 
     def show_complaints(self):
         if self.admin_user and self.admin_user.can_manage_complaints:
-            messagebox.showinfo("Navigation", "Complaints functionality coming soon!")
+            self.show_sub_page(self.sub_pages["ComplaintsPage"]) # Navigate to ComplaintsPage
         else:
             messagebox.showwarning("Permission Denied", "You do not have permission to manage complaints.")
 
     def show_comparison(self):
-        if self.admin_user and self.admin_user.can_view_reports: # Comparison depends on reports
-            messagebox.showinfo("Navigation", "Comparison functionality coming soon!")
+        if self.admin_user and self.admin_user.can_view_reports: # Comparison depends on reports access
+            self.show_sub_page(self.sub_pages["ComparisonPage"]) # Navigate to ComparisonPage
         else:
             messagebox.showwarning("Permission Denied", "You do not have permission to view reports for comparison.")
 
     def show_app_settings(self):
-        messagebox.showinfo("Navigation", "Application Settings functionality coming soon!")
+        # App settings are usually accessible to all admins or a specific role
+        self.show_sub_page(self.sub_pages["AppSettingsPage"]) # Navigate to AppSettingsPage
 
     def handle_logout(self):
         if messagebox.askyesno("Logout", "Are you sure you want to log out?"):
