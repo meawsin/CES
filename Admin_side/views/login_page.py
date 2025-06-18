@@ -45,7 +45,9 @@ class LoginPage(tk.Frame):
         self.password_entry.insert(0, "1234") # Pre-fill for quick testing
 
         # Login Button
-        login_button = ttk.Button(login_frame, text="Login", command=self.handle_login)
+        login_button = ttk.Button(login_frame, text="Login", command=self.handle_login, style="Login.TButton")
+        self.style.configure("Login.TButton", font=("Arial", 12, "bold"), background="#3498db", foreground="black")
+        self.style.map("Login.TButton", background=[('active', '#2980b9')])
         login_button.grid(row=3, column=0, columnspan=2, pady=20)
 
         # Error Message Label

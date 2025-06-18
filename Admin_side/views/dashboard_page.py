@@ -66,9 +66,9 @@ class DashboardPage(tk.Frame):
         logout_button.pack(fill="x", pady=20, padx=10, side="bottom")
 
         self.style = ttk.Style()
-        self.style.configure("Sidebar.TButton", font=("Arial", 12), background="#34495e", foreground="white", relief="flat", borderwidth=0)
+        self.style.configure("Sidebar.TButton", font=("Arial", 12), background="#34495e", foreground="black", relief="flat", borderwidth=0)
         self.style.map("Sidebar.TButton", background=[('active', '#2c3e50')])
-        self.style.configure("Sidebar.Logout.TButton", font=("Arial", 12, "bold"), background="#e74c3c", foreground="white", relief="flat", borderwidth=0)
+        self.style.configure("Sidebar.Logout.TButton", font=("Arial", 12, "bold"), background="#e74c3c", foreground="black", relief="flat", borderwidth=0)
         self.style.map("Sidebar.Logout.TButton", background=[('active', '#c0392b')])
 
 
