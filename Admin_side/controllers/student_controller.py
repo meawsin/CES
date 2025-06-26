@@ -1,4 +1,3 @@
-# controllers/student_controller.py
 from database.db_manager import DBManager
 from models.student_model import Student
 
@@ -59,3 +58,10 @@ class StudentController:
         """Deletes a student record by ID."""
         query = "DELETE FROM students WHERE student_id = %s;"
         return self.db.execute_query(query, (student_id,))
+
+    # --- New method for Dashboard ---
+    def get_total_batches_count(self):
+        """Counts the total number of unique batches in the system."""
+        query = "SELECT COUNT(DISTINCT batch) AS count FROM students WHERE batch IS NOT NULL;"
+        result = self.db.fetch_data(query, fetch_one=True)
+        return result['count'] if result else 0

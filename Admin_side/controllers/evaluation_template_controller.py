@@ -1,9 +1,10 @@
-# controllers/evaluation_template_controller.py
+# Admin_side/controllers/evaluation_template_controller.py
 from database.db_manager import DBManager
 from models.evaluation_template_model import EvaluationTemplate
 from models.evaluation_completion_model import EvaluationCompletion
 from models.student_model import Student # To get student names for completion tracking
 from models.course_model import Course # To get course names
+from datetime import date # Import date for comparison
 
 class EvaluationTemplateController:
     def __init__(self):
@@ -59,84 +60,40 @@ class EvaluationTemplateController:
         query = "DELETE FROM evaluation_templates WHERE id = %s;"
         return self.db.execute_query(query, (template_id,))
 
-    # --- Template Assignment and Completion Tracking ---
+    # --- New method for Dashboard ---
+    def get_running_evaluations_count(self, admin_id=None):
+        """
+        Counts evaluation templates that are currently active (last_date is today or in the future)
+        and are assigned to courses or batches relevant to the admin.
+        For simplicity, we'll count templates with last_date >= today.
+        A more complex logic would involve checking course status or batch active status.
+        """
+        query = """
+        SELECT COUNT(DISTINCT id) AS count
+        FROM evaluation_templates
+        WHERE last_date >= CURDATE()
+        """
+        params = []
+        if admin_id:
+            # If an evaluation template has an admin_id, it's specific to that admin.
+            # If admin_id is NULL, it's considered a general template visible to all or relevant to its course/batch.
+            # We'll include templates either created by this admin OR general templates not tied to a specific admin.
+            query += " AND (admin_id = %s OR admin_id IS NULL OR course_code IS NOT NULL)"
+            params.append(admin_id) # The course_code IS NOT NULL part is to capture templates assigned to courses.
+
+        result = self.db.fetch_data(query, tuple(params), fetch_one=True)
+        return result['count'] if result else 0
+
+    # --- Template Assignment and Completion Tracking (Existing methods) ---
     def assign_template_to_course_batch(self, template_id, course_code, batch, last_date, admin_id):
         """
         Assigns a template to a specific course and batch.
         This effectively creates/updates the evaluation_templates entry for this specific assignment.
-        NOTE: This design assumes `evaluation_templates` table holds assignments.
-              If a separate `template_assignments` table was used (as suggested previously),
-              the logic here would change to insert into that table.
-              For now, we'll stick to the current schema where template definition
-              and its assignment to a batch/course are linked in one record.
         """
-        # Given the schema, this is effectively adding/updating the evaluation_template entry
-        # rather than a separate assignment table.
-        # So, it's more like editing a template's assignment details.
-        # If the template_id implies a unique assignment, we'd update.
-        # If it's a new assignment of an existing template, we'd insert a new template entry
-        # with the same questions_set but different course/batch/date.
-
-        # Let's assume for this method, we are creating a *new record* in evaluation_templates
-        # which represents an assignment of a form for a specific course/batch.
-        # This implies that "template_id" for an assignment might be a new auto-incremented ID,
-        # even if questions_set is reused.
-
-        # For the provided schema, 'id' is PK. If we insert, it gets a new ID.
-        # If the idea is "one template questions_set can be assigned many times",
-        # the schema needs 'template_id' (FK to master template) and 'assignment_id' (PK).
-        # Currently, 'id' is PK, so each new 'assignment' creates a new 'template' record.
-
-        # Let's clarify the intention:
-        # A) One record in `evaluation_templates` is *the* template. It can only be assigned to ONE course/batch.
-        # B) One record in `evaluation_templates` defines a specific *instance* of an evaluation (template + assignment).
-        # C) There's a master `evaluation_form_definitions` table and `evaluation_templates` is the assignment table.
-
-        # Based on your prompt "can assign same evaluation form for multiple courses, multiple batches"
-        # and the schema: `evaluation_templates (id PK, ..., batch, course_code)`,
-        # Option B seems implied where each row is an assignment. So reusing a "form" means copying questions_set.
-
-        # Let's implement based on interpretation B: creating a new 'template' record for a new assignment.
-        # The 'template_id' passed here would be None for a new assignment, and the `questions_set`
-        # would come from a "master" template or be manually entered.
-
-        # Given your schema, `admin_id` creates the template. `batch` and `course_code` define its scope.
-        # `last_date` is its deadline.
-        # To "assign same evaluation form for multiple courses, multiple batches" means creating new
-        # `evaluation_templates` records, each with a different `batch` and/or `course_code`, but the same `questions_set`.
-
-        # For this function, let's assume `template_id` is for an existing questions_set (or `None` for new).
-        # We need to fetch the `questions_set` if `template_id` is provided and implies reusing a form.
-        # If `template_id` from UI implies "this is a template I want to assign", then we need its questions_set.
-
-        # For now, let's assume `questions_set` is provided directly for the assignment.
-        # Admin selects a template (by ID), gets its questions_set, then specifies batch/course/date for a NEW entry.
-
-        # Scenario: Admin wants to assign a template (e.g., ID 1) to Course X, Batch Y.
-        # This implies a new entry in evaluation_templates with a new ID, Course X, Batch Y, and template 1's questions.
-
-        # Function signature suggests we're creating a new assignment instance.
-        # We need the actual questions_set content to insert.
-        # Let's modify this to take `source_template_id` and create a new assignment record.
-
-        # Placeholder logic based on interpretation B:
-        # To assign template X to course Y, batch Z with deadline D:
-        # 1. Fetch questions_set of template X.
-        # 2. Create a NEW `evaluation_templates` record with new `id`, `questions_set` from X, `course_code` Y, `batch` Z, `last_date` D.
-
-        # Let's use a more explicit function name like `create_template_assignment`.
-        # This current `assign_template_to_course_batch` needs revision based on the actual UI flow.
-        # For simplicity, let's assume `add_template` (above) covers creating a new template record
-        # that *is* an assignment, by providing all its details.
-
-        # If the request is to take an EXISTING template (by its ID) and apply it to a new course/batch:
-        # 1. Fetch the existing template by `template_id`.
         source_template = self.get_template_by_id(template_id)
         if not source_template:
             return False, "Source template not found."
 
-        # 2. Create a new EvaluationTemplate object with the same questions_set
-        #    but new batch, course_code, last_date, and admin_id (and a new auto-incremented ID).
         new_assignment = EvaluationTemplate(
             id=None, # Will be auto-generated by DB
             title=f"Assignment: {source_template.title} for {course_code if course_code else ''} {batch if batch else ''}",
@@ -158,11 +115,6 @@ class EvaluationTemplateController:
         Gets completion status for a specific template/course assignment.
         Returns total assigned students/batches, completed count, and list of non-completers (anonymized).
         """
-        # Determine all students expected to complete this template for this course/batch
-        # This requires linking evaluation_templates (which has batch/course_code)
-        # to students via course_student table.
-
-        # First, find the specific template assignment by ID
         template_assignment = self.get_template_by_id(template_id)
         if not template_assignment:
             return None # Template assignment not found
@@ -170,14 +122,9 @@ class EvaluationTemplateController:
         target_batch = template_assignment.batch
         target_course = template_assignment.course_code
 
-        # Get all students who are associated with this course and/or batch
-        # This query needs to account for students assigned individually OR by batch.
-        # Assuming course_student contains unique student-course links or batch-course links.
-
         all_relevant_student_ids = set()
 
         if target_course:
-            # Students assigned to this course directly
             query_individual = """
             SELECT cs.student_id
             FROM course_student cs
@@ -188,7 +135,6 @@ class EvaluationTemplateController:
                 for row in individual_students:
                     all_relevant_student_ids.add(row['student_id'])
 
-            # Students in batches assigned to this course
             query_batch = """
             SELECT s.student_id
             FROM students s
@@ -218,7 +164,6 @@ class EvaluationTemplateController:
                 "non_completers": []
             }
 
-        # Get completed students for this template and course
         completed_student_ids = set()
         completed_query = """
         SELECT student_id FROM evaluation_completion
@@ -232,13 +177,10 @@ class EvaluationTemplateController:
         completed_count = len(completed_student_ids)
         completion_percentage = (completed_count / total_expected) * 100 if total_expected > 0 else 0.0
 
-        # Identify non-completers (their IDs are needed for tracking, but names are anonymized)
         non_completer_ids = list(all_relevant_student_ids - completed_student_ids)
 
-        # Fetch basic info for non-completers (e.g., student ID, batch, department - but NOT name)
         non_completers_info = []
         if non_completer_ids:
-            # Create a string of placeholders for IN clause
             placeholders = ', '.join(['%s'] * len(non_completer_ids))
             non_completer_query = f"""
             SELECT student_id, batch, department
