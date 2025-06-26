@@ -24,7 +24,6 @@ class CourseSetupPage(tk.Frame):
         self.notebook.pack(fill="both", expand=True, padx=10, pady=10)
 
         # 1. Create all tab frames and their widgets first.
-        # This ensures self.course_combo_faculty and self.course_combo_student exist.
         self._create_manage_courses_tab()
         self._create_assign_faculty_tab()
         self._create_assign_students_tab()
@@ -43,10 +42,12 @@ class CourseSetupPage(tk.Frame):
         # Buttons
         button_frame = ttk.Frame(self.manage_courses_frame)
         button_frame.pack(pady=5, fill="x")
-        ttk.Button(button_frame, text="Add Course", command=self.open_add_course_form).pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Edit Course", command=self.open_edit_course_form).pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Delete Course", command=self.delete_selected_course).pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Refresh List", command=self.load_courses).pack(side="right", padx=5)
+        
+        # Use global "General.TButton" style
+        ttk.Button(button_frame, text="Add Course", command=self.open_add_course_form, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Edit Course", command=self.open_edit_course_form, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Delete Course", command=self.delete_selected_course, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Refresh List", command=self.load_courses, style="General.TButton").pack(side="right", padx=5)
 
         # Treeview
         self.course_tree = ttk.Treeview(self.manage_courses_frame, columns=("Code", "Name", "Status"), show="headings")
@@ -73,44 +74,56 @@ class CourseSetupPage(tk.Frame):
             self.course_tree.insert("", "end", iid=course.course_code, values=(course.course_code, course.name, course.status))
 
     def open_add_course_form(self):
-        add_form_window = tk.Toplevel(self.parent_controller)
-        add_form_window.title("Add New Course")
-        add_form_window.transient(self.parent_controller)
-        add_form_window.grab_set()
-        add_form_window.geometry("400x250")
-        AddEditCourseForm(add_form_window, self.course_controller, self.load_courses)
+        add_form_window = AddEditCourseForm(self.parent_controller.get_root_window(), self.course_controller, self.load_courses)
+        self.wait_window_and_refresh(add_form_window, self.load_courses) # Pass refresh callback to helper
 
     def open_edit_course_form(self):
         selected_item = self.course_tree.focus()
         if not selected_item:
             messagebox.showwarning("No Selection", "Please select a course to edit.")
             return
-        course_code_to_edit = self.course_tree.item(selected_item)['iid']
+
+        course_code_to_edit = selected_item # selected_item IS the iid
+        print(f"\n--- Attempting to EDIT course with Code: {course_code_to_edit} ---")
         course_data = self.course_controller.get_course_by_code(course_code_to_edit)
+
         if course_data:
-            edit_form_window = tk.Toplevel(self.parent_controller)
-            edit_form_window.title("Edit Course")
-            edit_form_window.transient(self.parent_controller)
-            edit_form_window.grab_set()
-            edit_form_window.geometry("400x250")
-            AddEditCourseForm(edit_form_window, self.course_controller, self.load_courses, course_to_edit=course_data)
+            print("Retrieved course_data object for editing:")
+            print(course_data.to_dict())
+            print("------------------------------------------")
+            edit_form_window = AddEditCourseForm(self.parent_controller.get_root_window(), self.course_controller, self.load_courses, course_to_edit=course_data)
+            self.wait_window_and_refresh(edit_form_window, self.load_courses)
         else:
-            messagebox.showerror("Error", "Could not retrieve course data for editing.")
+            messagebox.showerror("Error", f"Could not retrieve course data for editing (Code: {course_code_to_edit}). Check if course exists or for DB errors.")
+            print(f"Failed to retrieve course data for Code: {course_code_to_edit}. 'course_data' was None.")
 
     def delete_selected_course(self):
         selected_item = self.course_tree.focus()
         if not selected_item:
             messagebox.showwarning("No Selection", "Please select a course to delete.")
             return
-        course_code_to_delete = self.course_tree.item(selected_item)['iid']
+
+        course_code_to_delete = selected_item # selected_item IS the iid
         course_name_to_delete = self.course_tree.item(selected_item)['values'][1]
+        print(f"\n--- Attempting to DELETE course: {course_name_to_delete} (Code: {course_code_to_delete}) ---")
+
+
         if messagebox.askyesno("Confirm Delete", f"Are you sure you want to delete course: {course_name_to_delete} ({course_code_to_delete})?"):
-            if self.course_controller.delete_course(course_code_to_delete):
+            success = self.course_controller.delete_course(course_code_to_delete)
+            if success:
                 messagebox.showinfo("Success", "Course deleted successfully.")
                 self.load_courses()
                 self.load_course_combos() # Also refresh comboboxes after deletion
             else:
-                messagebox.showerror("Error", "Failed to delete course. It might have active assignments or evaluations.")
+                messagebox.showerror("Error", "Failed to delete course. It might have active assignments or evaluations. Please check dependencies or database logs.")
+                print(f"Failed to delete course Code: {course_code_to_delete}. Database operation returned False.")
+
+
+    def wait_window_and_refresh(self, window, refresh_callback):
+        """Helper method to wait for a Toplevel window to close and then call the specific refresh callback."""
+        self.parent_controller.get_root_window().wait_window(window)
+        refresh_callback() # Call the specific refresh function for the tab
+
 
     # --- Assign Faculty Tab ---
     def _create_assign_faculty_tab(self):
@@ -128,7 +141,7 @@ class CourseSetupPage(tk.Frame):
         self.course_combo_faculty.pack(side="left", padx=5)
         self.course_combo_faculty.bind("<<ComboboxSelected>>", self.load_assigned_faculty)
 
-        ttk.Button(self.assign_faculty_frame, text="Assign/Unassign Faculty", command=self.open_assign_faculty_form).pack(pady=10)
+        ttk.Button(self.assign_faculty_frame, text="Assign/Unassign Faculty", command=self.open_assign_faculty_form, style="General.TButton").pack(pady=10)
 
         # Treeview for assigned faculty
         self.assigned_faculty_tree = ttk.Treeview(self.assign_faculty_frame, columns=("ID", "Name", "Email"), show="headings")
@@ -150,10 +163,9 @@ class CourseSetupPage(tk.Frame):
         courses = self.course_controller.get_all_courses()
         self.course_codes = [course.course_code for course in courses]
 
-        # Ensure comboboxes are initialized before attempting to set their values
         if hasattr(self, 'course_combo_faculty'):
             self.course_combo_faculty['values'] = self.course_codes
-        if hasattr(self, 'course_combo_student'): # This is the crucial check
+        if hasattr(self, 'course_combo_student'):
             self.course_combo_student['values'] = self.course_codes
 
 
@@ -172,13 +184,10 @@ class CourseSetupPage(tk.Frame):
             messagebox.showwarning("No Course Selected", "Please select a course first.")
             return
 
-        assign_form_window = tk.Toplevel(self.parent_controller)
-        assign_form_window.title(f"Assign Faculty to {selected_course_code}")
-        assign_form_window.transient(self.parent_controller)
-        assign_form_window.grab_set()
-        assign_form_window.geometry("700x500")
-        AssignCourseFacultyForm(assign_form_window, self.course_controller, self.faculty_controller,
-                                selected_course_code, self.load_assigned_faculty)
+        assign_form_window = AssignCourseFacultyForm(self.parent_controller.get_root_window(), self.course_controller, self.faculty_controller,
+                                selected_course_code, lambda: self.load_assigned_faculty(None)) # Pass specific refresh for this treeview
+        self.wait_window_and_refresh(assign_form_window, lambda: self.load_assigned_faculty(None))
+
 
     # --- Assign Students/Batches Tab ---
     def _create_assign_students_tab(self):
@@ -195,7 +204,7 @@ class CourseSetupPage(tk.Frame):
         self.course_combo_student.pack(side="left", padx=5)
         self.course_combo_student.bind("<<ComboboxSelected>>", self.load_assigned_students_batches)
 
-        ttk.Button(self.assign_students_frame, text="Assign/Unassign Students/Batches", command=self.open_assign_student_form).pack(pady=10)
+        ttk.Button(self.assign_students_frame, text="Assign/Unassign Students/Batches", command=self.open_assign_student_form, style="General.TButton").pack(pady=10)
 
         self.assigned_students_tree = ttk.Treeview(self.assign_students_frame, columns=("Student ID", "Student Name", "Batch", "Department"), show="headings")
         self.assigned_students_tree.heading("Student ID", text="Student ID")
@@ -233,10 +242,6 @@ class CourseSetupPage(tk.Frame):
             messagebox.showwarning("No Course Selected", "Please select a course first.")
             return
 
-        assign_form_window = tk.Toplevel(self.parent_controller)
-        assign_form_window.title(f"Assign Students/Batches to {selected_course_code}")
-        assign_form_window.transient(self.parent_controller)
-        assign_form_window.grab_set()
-        assign_form_window.geometry("700x600")
-        AssignCourseStudentForm(assign_form_window, self.course_controller, self.student_controller,
-                                selected_course_code, self.load_assigned_students_batches)
+        assign_form_window = AssignCourseStudentForm(self.parent_controller.get_root_window(), self.course_controller, self.student_controller,
+                                selected_course_code, lambda: self.load_assigned_students_batches(None))
+        self.wait_window_and_refresh(assign_form_window, lambda: self.load_assigned_students_batches(None))

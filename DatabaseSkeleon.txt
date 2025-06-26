@@ -73,11 +73,13 @@ CREATE TABLE course_faculty (
 
 -- Course_Student Table: Junction table for course-student or batch assignments
 CREATE TABLE course_student (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     course_code VARCHAR(20) NOT NULL,
-    student_id BIGINT NOT NULL,
-    batch VARCHAR(20), -- Allows batch-level enrollment
+    student_id BIGINT NULL,
+    batch VARCHAR(20) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (course_code, student_id, batch),
+    UNIQUE (course_code, student_id), -- Ensures a student is assigned only once per course
+    UNIQUE (course_code, batch),      -- Ensures a batch is assigned only once per course
     FOREIGN KEY (course_code) REFERENCES courses(course_code) ON DELETE CASCADE,
     FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE SET NULL
 );

@@ -66,7 +66,6 @@ class StudentController:
         result = self.db.fetch_data(query, fetch_one=True)
         return result['count'] if result else 0
 
-    # --- New methods for dropdown data ---
     def get_unique_sessions(self):
         """Fetches all unique sessions from the database, ordered descending."""
         query = "SELECT DISTINCT session FROM students WHERE session IS NOT NULL ORDER BY session DESC;"
@@ -78,3 +77,13 @@ class StudentController:
         query = "SELECT DISTINCT department FROM students WHERE department IS NOT NULL ORDER BY department ASC;"
         departments_data = self.db.fetch_data(query, fetch_all=True)
         return [row['department'] for row in departments_data] if departments_data else []
+
+    # --- NEW METHOD FOR BATCH ASSIGNMENT ---
+    def get_unique_batches_with_departments(self):
+        """
+        Fetches all unique batches and their associated departments from the database.
+        Returns a list of dictionaries like [{'batch': 'BICE-22', 'department': 'ICT'}].
+        """
+        query = "SELECT DISTINCT batch, department FROM students WHERE batch IS NOT NULL ORDER BY batch ASC;"
+        batches_data = self.db.fetch_data(query, fetch_all=True)
+        return batches_data if batches_data else []
