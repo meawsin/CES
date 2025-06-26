@@ -29,10 +29,16 @@ class HRFacultyPage(tk.Frame):
 
         button_frame = ttk.Frame(self, padding="10")
         button_frame.pack(pady=5, fill="x")
-        ttk.Button(button_frame, text="Add Faculty", command=self.open_add_faculty_form).pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Edit Faculty", command=self.open_edit_faculty_form).pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Delete Faculty", command=self.delete_selected_faculty).pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Refresh List", command=self.load_faculty).pack(side="right", padx=5)
+
+        # Apply DarkText.TButton style for better visibility
+        self.style = ttk.Style()
+        self.style.configure("DarkText.TButton", foreground="black", background="#e0e0e0") # Dark text on a light grey background
+        self.style.map("DarkText.TButton", background=[('active', '#cccccc')]) # Lighter grey on active
+
+        ttk.Button(button_frame, text="Add Faculty", command=self.open_add_faculty_form, style="DarkText.TButton").pack(side="left", padx=5)
+        # REMOVED: Edit Faculty Button
+        ttk.Button(button_frame, text="Delete Faculty", command=self.delete_selected_faculty, style="DarkText.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Refresh List", command=self.load_faculty, style="DarkText.TButton").pack(side="right", padx=5)
 
         self.tree = ttk.Treeview(self, columns=(
             "ID", "Name", "Email", "Contact No", "DOB", "Gender", "Joining Date"
@@ -69,9 +75,13 @@ class HRFacultyPage(tk.Frame):
         self.all_faculty_data = faculty_members
 
         for faculty in faculty_members:
+            # Format date objects for display in Treeview
+            dob_str = faculty.dob.strftime("%Y-%m-%d") if faculty.dob else "N/A"
+            joining_date_str = faculty.joining_date.strftime("%Y-%m-%d") if faculty.joining_date else "N/A"
+
             self.tree.insert("", "end", iid=faculty.faculty_id, values=(
                 faculty.faculty_id, faculty.name, faculty.email, faculty.contact_no,
-                faculty.dob, faculty.gender, faculty.joining_date
+                dob_str, faculty.gender, joining_date_str
             ))
 
     def filter_faculty(self, event=None):
@@ -89,45 +99,42 @@ class HRFacultyPage(tk.Frame):
         ]
 
         for faculty in filtered_faculty:
+            # Format date objects for display in Treeview
+            dob_str = faculty.dob.strftime("%Y-%m-%d") if faculty.dob else "N/A"
+            joining_date_str = faculty.joining_date.strftime("%Y-%m-%d") if faculty.joining_date else "N/A"
+
             self.tree.insert("", "end", iid=faculty.faculty_id, values=(
                 faculty.faculty_id, faculty.name, faculty.email, faculty.contact_no,
-                faculty.dob, faculty.gender, faculty.joining_date
+                dob_str, faculty.gender, joining_date_str
             ))
 
     def open_add_faculty_form(self):
         """Opens a form to add a new faculty member."""
-        add_form_window = tk.Toplevel(self.parent_controller)
-        add_form_window.title("Add New Faculty")
-        add_form_window.transient(self.parent_controller)
-        add_form_window.grab_set()
-        x = self.parent_controller.winfo_x() + (self.parent_controller.winfo_width() / 2) - 300
-        y = self.parent_controller.winfo_y() + (self.parent_controller.winfo_height() / 2) - 200
-        add_form_window.geometry(f"600x400+{int(x)}+{int(y)}")
-
-        AddFacultyForm(add_form_window, self.faculty_controller, self.load_faculty)
+        add_form_window = AddFacultyForm(self.parent_controller.get_root_window(), self.faculty_controller, self.load_faculty)
+        self.wait_window_and_refresh(add_form_window)
 
     def open_edit_faculty_form(self):
         """Opens a form to edit the selected faculty member."""
+        # This method is now effectively redundant since the button is removed,
+        # but leaving it for now in case you decide to re-enable edit later.
         selected_item = self.tree.focus()
         if not selected_item:
             messagebox.showwarning("No Selection", "Please select a faculty member to edit.")
             return
 
-        faculty_id_to_edit = self.tree.item(selected_item)['iid']
+        faculty_id_to_edit = selected_item
+        print(f"\n--- Attempting to EDIT faculty with ID: {faculty_id_to_edit} ---")
         faculty_data = self.faculty_controller.get_faculty_by_id(faculty_id_to_edit)
 
         if faculty_data:
-            edit_form_window = tk.Toplevel(self.parent_controller)
-            edit_form_window.title("Edit Faculty")
-            edit_form_window.transient(self.parent_controller)
-            edit_form_window.grab_set()
-            x = self.parent_controller.winfo_x() + (self.parent_controller.winfo_width() / 2) - 300
-            y = self.parent_controller.winfo_y() + (self.parent_controller.winfo_height() / 2) - 200
-            edit_form_window.geometry(f"600x400+{int(x)}+{int(y)}")
-
-            AddFacultyForm(edit_form_window, self.faculty_controller, self.load_faculty, faculty_to_edit=faculty_data)
+            print("Retrieved faculty_data object for editing:")
+            print(faculty_data.to_dict())
+            print("------------------------------------------")
+            edit_form_window = AddFacultyForm(self.parent_controller.get_root_window(), self.faculty_controller, self.load_faculty, faculty_to_edit=faculty_data)
+            self.wait_window_and_refresh(edit_form_window)
         else:
-            messagebox.showerror("Error", "Could not retrieve faculty data for editing.")
+            messagebox.showerror("Error", f"Could not retrieve faculty data for editing (ID: {faculty_id_to_edit}). Check if faculty exists or for DB errors.")
+            print(f"Failed to retrieve faculty data for ID: {faculty_id_to_edit}. 'faculty_data' was None.")
 
     def delete_selected_faculty(self):
         """Deletes the selected faculty member."""
@@ -136,12 +143,23 @@ class HRFacultyPage(tk.Frame):
             messagebox.showwarning("No Selection", "Please select a faculty member to delete.")
             return
 
-        faculty_id_to_delete = self.tree.item(selected_item)['iid']
+        faculty_id_to_delete = selected_item
         faculty_name_to_delete = self.tree.item(selected_item)['values'][1]
+        print(f"\n--- Attempting to DELETE faculty: {faculty_name_to_delete} (ID: {faculty_id_to_delete}) ---")
+
 
         if messagebox.askyesno("Confirm Delete", f"Are you sure you want to delete faculty: {faculty_name_to_delete} (ID: {faculty_id_to_delete})?"):
-            if self.faculty_controller.delete_faculty(faculty_id_to_delete):
+            success = self.faculty_controller.delete_faculty(faculty_id_to_delete)
+            if success:
                 messagebox.showinfo("Success", "Faculty deleted successfully.")
                 self.load_faculty()
             else:
-                messagebox.showerror("Error", "Failed to delete faculty. Check database connection or logs.")
+                messagebox.showerror("Error", "Failed to delete faculty. This might happen if the faculty is referenced in other tables (e.g., in course_faculty). Please ensure no dependencies exist or manually remove them if necessary, then retry.")
+                print(f"Failed to delete faculty ID: {faculty_id_to_delete}. Database operation returned False.")
+
+
+    def wait_window_and_refresh(self, window):
+        """Helper method to wait for a Toplevel window to close and then refresh the faculty list."""
+        self.parent_controller.get_root_window().wait_window(window)
+        self.load_faculty()
+

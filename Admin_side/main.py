@@ -13,7 +13,8 @@ class CourseEvaluationApp(tk.Tk):
         self.minsize(1000, 700)
         self.state('zoomed')
 
-        # NEW: Explicitly store a reference to the Tkinter root window for Toplevel parenting
+        # Explicitly store a reference to the Tkinter root window for Toplevel parenting
+        # This is already correctly done as self.root_window = self
         self.root_window = self
 
         self.container = tk.Frame(self)
@@ -25,17 +26,25 @@ class CourseEvaluationApp(tk.Tk):
         self.current_user = None
 
         self.pages = {}
-        self._initialize_pages()
+        # Delay initialization of pages slightly, to ensure root is fully ready
+        self.after(100, self._initialize_pages) # Call after 100ms
+        self.initial_page_shown = False # Flag to ensure page is shown only once after init
 
         if not self.db_manager.connect():
             messagebox.showerror("Database Error", "Could not connect to the database. Please check your config.py.")
             self.destroy()
 
-        self.show_page("LoginPage")
 
     def _initialize_pages(self):
+        # We instantiate pages here, ensuring self.root_window is fully available
         self.pages["LoginPage"] = LoginPage(parent=self.container, controller=self)
         self.pages["LoginPage"].grid(row=0, column=0, sticky="nsew")
+
+        # Now that pages are initialized, show the login page
+        if not self.initial_page_shown:
+            self.show_page("LoginPage")
+            self.initial_page_shown = True
+
 
     def show_page(self, page_name, user_data=None):
         page = self.pages.get(page_name)
@@ -46,12 +55,13 @@ class CourseEvaluationApp(tk.Tk):
                 return
 
             if "DashboardPage" not in self.pages:
+                # IMPORTANT: Ensure DashboardPage receives the correct controller (self, the app root)
                 self.pages["DashboardPage"] = DashboardPage(parent=self.container, controller=self, admin_user=self.current_user)
                 self.pages["DashboardPage"].grid(row=0, column=0, sticky="nsew")
                 page = self.pages["DashboardPage"]
             else:
                 page = self.pages["DashboardPage"]
-                page.update_user_info(self.current_user)
+                page.update_user_info(self.current_user) # Update dashboard info on return
 
         if page:
             page.tkraise()
@@ -64,7 +74,7 @@ class CourseEvaluationApp(tk.Tk):
     def get_current_user(self):
         return self.current_user
 
-    # NEW: Method to expose the root Tkinter window
+    # Method to expose the root Tkinter window
     def get_root_window(self):
         return self.root_window
 
@@ -77,3 +87,4 @@ if __name__ == "__main__":
     app = CourseEvaluationApp()
     app.protocol("WM_DELETE_WINDOW", app.on_closing)
     app.mainloop()
+

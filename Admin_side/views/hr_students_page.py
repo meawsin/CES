@@ -34,10 +34,15 @@ class HRStudentsPage(tk.Frame):
         button_frame = ttk.Frame(self, padding="10")
         button_frame.pack(pady=5, fill="x")
 
-        ttk.Button(button_frame, text="Add Student", command=self.open_add_student_form).pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Edit Student", command=self.open_edit_student_form).pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Delete Student", command=self.delete_selected_student).pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Refresh List", command=self.load_students).pack(side="right", padx=5)
+        # Apply a specific style to these buttons for better visibility
+        self.style = ttk.Style()
+        self.style.configure("DarkText.TButton", foreground="black", background="#e0e0e0") # Dark text on a light grey background
+        self.style.map("DarkText.TButton", background=[('active', '#cccccc')]) # Lighter grey on active
+
+        ttk.Button(button_frame, text="Add Student", command=self.open_add_student_form, style="DarkText.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Edit Student", command=self.open_edit_student_form, style="DarkText.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Delete Student", command=self.delete_selected_student, style="DarkText.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Refresh List", command=self.load_students, style="DarkText.TButton").pack(side="right", padx=5)
 
 
         # Students Treeview (Table)
@@ -119,11 +124,8 @@ class HRStudentsPage(tk.Frame):
 
     def open_add_student_form(self):
         """Opens a form to add a new student."""
-        # Create a new top-level window for the form
-        add_form_window = tk.Toplevel(self.parent_controller)
-
-        AddStudentForm(add_form_window, self.student_controller, self.load_students)
-
+        add_form_window = AddStudentForm(self.parent_controller.get_root_window(), self.student_controller, self.load_students)
+        self.wait_window_and_refresh(add_form_window) # Use helper to wait and refresh
 
     def open_edit_student_form(self):
         """Opens a form to edit the selected student."""
@@ -132,21 +134,21 @@ class HRStudentsPage(tk.Frame):
             messagebox.showwarning("No Selection", "Please select a student to edit.")
             return
 
-        student_id_to_edit = self.tree.item(selected_item)['iid']
+        # CRITICAL FIX: selected_item IS the iid
+        student_id_to_edit = selected_item
+        # --- DEBUGGING STEP ---
+        print(f"Attempting to edit student with ID: {student_id_to_edit}")
         student_data = self.student_controller.get_student_by_id(student_id_to_edit)
 
         if student_data:
-            edit_form_window = tk.Toplevel(self.parent_controller)
-            edit_form_window.title("Edit Student")
-            edit_form_window.transient(self.parent_controller)
-            edit_form_window.grab_set()
-            x = self.parent_controller.winfo_x() + (self.parent_controller.winfo_width() / 2) - 300
-            y = self.parent_controller.winfo_y() + (self.parent_controller.winfo_height() / 2) - 250
-            edit_form_window.geometry(f"600x500+{int(x)}+{int(y)}")
-
-            AddStudentForm(edit_form_window, self.student_controller, self.load_students, student_to_edit=student_data)
+            print(f"Retrieved student data: {student_data.to_dict()}")
+            edit_form_window = AddStudentForm(self.parent_controller.get_root_window(), self.student_controller, self.load_students, student_to_edit=student_data)
+            self.wait_window_and_refresh(edit_form_window) # Use helper to wait and refresh
         else:
-            messagebox.showerror("Error", "Could not retrieve student data for editing.")
+            messagebox.showerror("Error", f"Could not retrieve student data for editing (ID: {student_id_to_edit}). Check if student exists or for DB errors.")
+            # --- DEBUGGING STEP ---
+            print(f"Failed to retrieve student data for ID: {student_id_to_edit}")
+
 
     def delete_selected_student(self):
         """Deletes the selected student from the database and updates the list."""
@@ -155,12 +157,25 @@ class HRStudentsPage(tk.Frame):
             messagebox.showwarning("No Selection", "Please select a student to delete.")
             return
 
-        student_id_to_delete = self.tree.item(selected_item)['iid']
+        # CRITICAL FIX: selected_item IS the iid
+        student_id_to_delete = selected_item
         student_name_to_delete = self.tree.item(selected_item)['values'][1] # Get name for confirmation
+        # --- DEBUGGING STEP ---
+        print(f"Attempting to delete student: {student_name_to_delete} (ID: {student_id_to_delete})")
+
 
         if messagebox.askyesno("Confirm Delete", f"Are you sure you want to delete student: {student_name_to_delete} (ID: {student_id_to_delete})?"):
-            if self.student_controller.delete_student(student_id_to_delete):
+            success = self.student_controller.delete_student(student_id_to_delete)
+            if success:
                 messagebox.showinfo("Success", "Student deleted successfully.")
                 self.load_students() # Refresh the list
             else:
-                messagebox.showerror("Error", "Failed to delete student. Check database connection or logs.")
+                # --- DEBUGGING STEP ---
+                print(f"Failed to delete student ID: {student_id_to_delete}")
+                messagebox.showerror("Error", "Failed to delete student. This might happen if the student is referenced in other tables (e.g., in course_student, evaluation_completion, or complaints). Please ensure no dependencies exist or manually remove them if necessary, then retry.")
+
+    def wait_window_and_refresh(self, window):
+        """Helper method to wait for a Toplevel window to close and then refresh the student list."""
+        self.parent_controller.get_root_window().wait_window(window) # Wait for the Toplevel to be destroyed
+        self.load_students() # Refresh the list after the Toplevel is closed
+

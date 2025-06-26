@@ -29,10 +29,16 @@ class HRAdminsPage(tk.Frame):
 
         button_frame = ttk.Frame(self, padding="10")
         button_frame.pack(pady=5, fill="x")
-        ttk.Button(button_frame, text="Add Admin", command=self.open_add_admin_form).pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Edit Admin", command=self.open_edit_admin_form).pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Delete Admin", command=self.delete_selected_admin).pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Refresh List", command=self.load_admins).pack(side="right", padx=5)
+
+        # Apply DarkText.TButton style for better visibility
+        self.style = ttk.Style()
+        self.style.configure("DarkText.TButton", foreground="black", background="#e0e0e0") # Dark text on a light grey background
+        self.style.map("DarkText.TButton", background=[('active', '#cccccc')]) # Lighter grey on active
+
+        ttk.Button(button_frame, text="Add Admin", command=self.open_add_admin_form, style="DarkText.TButton").pack(side="left", padx=5)
+        # REMOVED: Edit Admin Button
+        ttk.Button(button_frame, text="Delete Admin", command=self.delete_selected_admin, style="DarkText.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Refresh List", command=self.load_admins, style="DarkText.TButton").pack(side="right", padx=5)
 
         self.tree = ttk.Treeview(self, columns=(
             "ID", "Name", "Email", "Contact No", "Create Templates", "View Reports",
@@ -109,38 +115,31 @@ class HRAdminsPage(tk.Frame):
 
     def open_add_admin_form(self):
         """Opens a form to add a new admin."""
-        add_form_window = tk.Toplevel(self.parent_controller)
-        add_form_window.title("Add New Admin")
-        add_form_window.transient(self.parent_controller)
-        add_form_window.grab_set()
-        x = self.parent_controller.winfo_x() + (self.parent_controller.winfo_width() / 2) - 350
-        y = self.parent_controller.winfo_y() + (self.parent_controller.winfo_height() / 2) - 250
-        add_form_window.geometry(f"700x500+{int(x)}+{int(y)}")
-
-        AddAdminForm(add_form_window, self.admin_controller, self.load_admins)
+        add_form_window = AddAdminForm(self.parent_controller.get_root_window(), self.admin_controller, self.load_admins)
+        self.wait_window_and_refresh(add_form_window) # Use helper to wait and refresh
 
     def open_edit_admin_form(self):
         """Opens a form to edit the selected admin."""
+        # This method is now effectively redundant since the button is removed,
+        # but leaving it for now in case you decide to re-enable edit later.
         selected_item = self.tree.focus()
         if not selected_item:
             messagebox.showwarning("No Selection", "Please select an admin to edit.")
             return
 
-        admin_id_to_edit = self.tree.item(selected_item)['iid']
+        admin_id_to_edit = selected_item
+        print(f"\n--- Attempting to EDIT admin with ID: {admin_id_to_edit} ---")
         admin_data = self.admin_controller.get_admin_by_id(admin_id_to_edit)
 
         if admin_data:
-            edit_form_window = tk.Toplevel(self.parent_controller)
-            edit_form_window.title("Edit Admin")
-            edit_form_window.transient(self.parent_controller)
-            edit_form_window.grab_set()
-            x = self.parent_controller.winfo_x() + (self.parent_controller.winfo_width() / 2) - 350
-            y = self.parent_controller.winfo_y() + (self.parent_controller.winfo_height() / 2) - 250
-            edit_form_window.geometry(f"700x500+{int(x)}+{int(y)}")
-
-            AddAdminForm(edit_form_window, self.admin_controller, self.load_admins, admin_to_edit=admin_data)
+            print("Retrieved admin_data object for editing:")
+            print(admin_data.to_dict())
+            print("------------------------------------------")
+            edit_form_window = AddAdminForm(self.parent_controller.get_root_window(), self.admin_controller, self.load_admins, admin_to_edit=admin_data)
+            self.wait_window_and_refresh(edit_form_window)
         else:
-            messagebox.showerror("Error", "Could not retrieve admin data for editing.")
+            messagebox.showerror("Error", f"Could not retrieve admin data for editing (ID: {admin_id_to_edit}). Check if admin exists or for DB errors.")
+            print(f"Failed to retrieve admin data for ID: {admin_id_to_edit}. 'admin_data' was None.")
 
     def delete_selected_admin(self):
         """Deletes the selected admin."""
@@ -149,8 +148,10 @@ class HRAdminsPage(tk.Frame):
             messagebox.showwarning("No Selection", "Please select an admin to delete.")
             return
 
-        admin_id_to_delete = self.tree.item(selected_item)['iid']
+        admin_id_to_delete = selected_item
         admin_name_to_delete = self.tree.item(selected_item)['values'][1]
+        print(f"\n--- Attempting to DELETE admin: {admin_name_to_delete} (ID: {admin_id_to_delete}) ---")
+
 
         if messagebox.askyesno("Confirm Delete", f"Are you sure you want to delete admin: {admin_name_to_delete} (ID: {admin_id_to_delete})?"):
             # Prevent deleting the currently logged-in admin
@@ -158,8 +159,16 @@ class HRAdminsPage(tk.Frame):
                 messagebox.showerror("Error", "Cannot delete the currently logged-in admin account.")
                 return
 
-            if self.admin_controller.delete_admin(admin_id_to_delete):
+            success = self.admin_controller.delete_admin(admin_id_to_delete)
+            if success:
                 messagebox.showinfo("Success", "Admin deleted successfully.")
                 self.load_admins()
             else:
                 messagebox.showerror("Error", "Failed to delete admin. Check database connection or logs.")
+                print(f"Failed to delete admin ID: {admin_id_to_delete}. Database operation returned False.")
+
+    def wait_window_and_refresh(self, window):
+        """Helper method to wait for a Toplevel window to close and then refresh the admin list."""
+        self.parent_controller.get_root_window().wait_window(window)
+        self.load_admins()
+

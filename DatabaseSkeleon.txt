@@ -332,3 +332,20 @@ INSERT INTO app_settings (admin_id, font_size, theme, auto_logout_minutes, creat
 VALUES 
     (1001, 'medium', 'light', 30, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     (1010, 'large', 'dark', 15, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+CREATE TABLE admin_calendar_events (
+    event_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    event_date DATE NOT NULL,
+    admin_id BIGINT DEFAULT NULL, -- Admin who created/is responsible for the event (optional)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES admins(admin_id) ON DELETE SET NULL
+);
+
+INSERT INTO admin_calendar_events (title, description, event_date, admin_id) VALUES
+('Semester Start', 'Fall 2025 semester begins', '2025-09-01', 1001),
+('Evaluation Period Ends', 'All evaluations for Fall 2025 must be completed', '2025-12-15', 1001),
+('Faculty Meeting', 'Discuss Q3 performance and upcoming initiatives', '2025-10-20', 1001),
+('Spring Semester Begins', 'New semester kickoff for 2026', '2026-01-20', 1010);
