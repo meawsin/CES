@@ -30,15 +30,11 @@ class HRAdminsPage(tk.Frame):
         button_frame = ttk.Frame(self, padding="10")
         button_frame.pack(pady=5, fill="x")
 
-        # Apply DarkText.TButton style for better visibility
-        self.style = ttk.Style()
-        self.style.configure("DarkText.TButton", foreground="black", background="#e0e0e0") # Dark text on a light grey background
-        self.style.map("DarkText.TButton", background=[('active', '#cccccc')]) # Lighter grey on active
-
-        ttk.Button(button_frame, text="Add Admin", command=self.open_add_admin_form, style="DarkText.TButton").pack(side="left", padx=5)
-        # REMOVED: Edit Admin Button
-        ttk.Button(button_frame, text="Delete Admin", command=self.delete_selected_admin, style="DarkText.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Refresh List", command=self.load_admins, style="DarkText.TButton").pack(side="right", padx=5)
+        # Use global "General.TButton" style
+        ttk.Button(button_frame, text="Add Admin", command=self.open_add_admin_form, style="General.TButton").pack(side="left", padx=5)
+        # Edit Admin Button is removed as per previous request
+        ttk.Button(button_frame, text="Delete Admin", command=self.delete_selected_admin, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Refresh List", command=self.load_admins, style="General.TButton").pack(side="right", padx=5)
 
         self.tree = ttk.Treeview(self, columns=(
             "ID", "Name", "Email", "Contact No", "Create Templates", "View Reports",
@@ -128,18 +124,13 @@ class HRAdminsPage(tk.Frame):
             return
 
         admin_id_to_edit = selected_item
-        print(f"\n--- Attempting to EDIT admin with ID: {admin_id_to_edit} ---")
         admin_data = self.admin_controller.get_admin_by_id(admin_id_to_edit)
 
         if admin_data:
-            print("Retrieved admin_data object for editing:")
-            print(admin_data.to_dict())
-            print("------------------------------------------")
             edit_form_window = AddAdminForm(self.parent_controller.get_root_window(), self.admin_controller, self.load_admins, admin_to_edit=admin_data)
             self.wait_window_and_refresh(edit_form_window)
         else:
             messagebox.showerror("Error", f"Could not retrieve admin data for editing (ID: {admin_id_to_edit}). Check if admin exists or for DB errors.")
-            print(f"Failed to retrieve admin data for ID: {admin_id_to_edit}. 'admin_data' was None.")
 
     def delete_selected_admin(self):
         """Deletes the selected admin."""
@@ -150,8 +141,6 @@ class HRAdminsPage(tk.Frame):
 
         admin_id_to_delete = selected_item
         admin_name_to_delete = self.tree.item(selected_item)['values'][1]
-        print(f"\n--- Attempting to DELETE admin: {admin_name_to_delete} (ID: {admin_id_to_delete}) ---")
-
 
         if messagebox.askyesno("Confirm Delete", f"Are you sure you want to delete admin: {admin_name_to_delete} (ID: {admin_id_to_delete})?"):
             # Prevent deleting the currently logged-in admin
@@ -165,10 +154,8 @@ class HRAdminsPage(tk.Frame):
                 self.load_admins()
             else:
                 messagebox.showerror("Error", "Failed to delete admin. Check database connection or logs.")
-                print(f"Failed to delete admin ID: {admin_id_to_delete}. Database operation returned False.")
 
     def wait_window_and_refresh(self, window):
         """Helper method to wait for a Toplevel window to close and then refresh the admin list."""
         self.parent_controller.get_root_window().wait_window(window)
         self.load_admins()
-

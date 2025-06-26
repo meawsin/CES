@@ -34,18 +34,14 @@ class HRStudentsPage(tk.Frame):
         button_frame = ttk.Frame(self, padding="10")
         button_frame.pack(pady=5, fill="x")
 
-        # Apply a specific style to these buttons for better visibility
-        self.style = ttk.Style()
-        self.style.configure("DarkText.TButton", foreground="black", background="#e0e0e0") # Dark text on a light grey background
-        self.style.map("DarkText.TButton", background=[('active', '#cccccc')]) # Lighter grey on active
-
-        ttk.Button(button_frame, text="Add Student", command=self.open_add_student_form, style="DarkText.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Edit Student", command=self.open_edit_student_form, style="DarkText.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Delete Student", command=self.delete_selected_student, style="DarkText.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Refresh List", command=self.load_students, style="DarkText.TButton").pack(side="right", padx=5)
+        # Use global "General.TButton" style
+        ttk.Button(button_frame, text="Add Student", command=self.open_add_student_form, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Edit Student", command=self.open_edit_student_form, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Delete Student", command=self.delete_selected_student, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Refresh List", command=self.load_students, style="General.TButton").pack(side="right", padx=5)
 
 
-        # Students Treeview (Table)
+        # Students Treeview (Table) - Will pick up global Treeview styles
         self.tree = ttk.Treeview(self, columns=(
             "ID", "Name", "Email", "Contact No", "DOB", "Gender",
             "Session", "Batch", "Enroll Date", "Department", "CGPA"
@@ -94,10 +90,14 @@ class HRStudentsPage(tk.Frame):
         self.all_students_data = students # Store for filtering
 
         for student in students:
+            # Convert date objects to string for display in Treeview
+            dob_str = student.dob.strftime("%Y-%m-%d") if student.dob else "N/A"
+            enroll_date_str = student.enrollment_date.strftime("%Y-%m-%d") if student.enrollment_date else "N/A"
+
             self.tree.insert("", "end", iid=student.student_id, values=(
                 student.student_id, student.name, student.email, student.contact_no,
-                student.dob, student.gender, student.session, student.batch,
-                student.enrollment_date, student.department, student.cgpa
+                dob_str, student.gender, student.session, student.batch,
+                enroll_date_str, student.department, student.cgpa
             ))
 
     def filter_students(self, event=None):
@@ -116,10 +116,14 @@ class HRStudentsPage(tk.Frame):
         ]
 
         for student in filtered_students:
+            # Convert date objects to string for display in Treeview
+            dob_str = student.dob.strftime("%Y-%m-%d") if student.dob else "N/A"
+            enroll_date_str = student.enrollment_date.strftime("%Y-%m-%d") if student.enrollment_date else "N/A"
+
             self.tree.insert("", "end", iid=student.student_id, values=(
                 student.student_id, student.name, student.email, student.contact_no,
-                student.dob, student.gender, student.session, student.batch,
-                student.enrollment_date, student.department, student.cgpa
+                dob_str, student.gender, student.session, student.batch,
+                enroll_date_str, student.department, student.cgpa
             ))
 
     def open_add_student_form(self):
@@ -134,48 +138,36 @@ class HRStudentsPage(tk.Frame):
             messagebox.showwarning("No Selection", "Please select a student to edit.")
             return
 
-        # CRITICAL FIX: selected_item IS the iid
-        student_id_to_edit = selected_item
-        # --- DEBUGGING STEP ---
-        print(f"Attempting to edit student with ID: {student_id_to_edit}")
+        student_id_to_edit = selected_item # selected_item IS the iid
         student_data = self.student_controller.get_student_by_id(student_id_to_edit)
 
         if student_data:
-            print(f"Retrieved student data: {student_data.to_dict()}")
             edit_form_window = AddStudentForm(self.parent_controller.get_root_window(), self.student_controller, self.load_students, student_to_edit=student_data)
-            self.wait_window_and_refresh(edit_form_window) # Use helper to wait and refresh
+            self.wait_window_and_refresh(edit_form_window)
         else:
-            messagebox.showerror("Error", f"Could not retrieve student data for editing (ID: {student_id_to_edit}). Check if student exists or for DB errors.")
-            # --- DEBUGGING STEP ---
-            print(f"Failed to retrieve student data for ID: {student_id_to_edit}")
+            messagebox.showerror("Error", f"Could not retrieve student data for editing (ID: {student_id_to_edit}). This student might not exist in the database or there was a DB connection error.")
 
 
     def delete_selected_student(self):
         """Deletes the selected student from the database and updates the list."""
-        selected_item = self.tree.focus() # Get selected item's IID (Student ID)
+        selected_item = self.tree.focus()
         if not selected_item:
             messagebox.showwarning("No Selection", "Please select a student to delete.")
             return
 
-        # CRITICAL FIX: selected_item IS the iid
         student_id_to_delete = selected_item
-        student_name_to_delete = self.tree.item(selected_item)['values'][1] # Get name for confirmation
-        # --- DEBUGGING STEP ---
-        print(f"Attempting to delete student: {student_name_to_delete} (ID: {student_id_to_delete})")
-
+        student_name_to_delete = self.tree.item(selected_item)['values'][1]
 
         if messagebox.askyesno("Confirm Delete", f"Are you sure you want to delete student: {student_name_to_delete} (ID: {student_id_to_delete})?"):
             success = self.student_controller.delete_student(student_id_to_delete)
             if success:
                 messagebox.showinfo("Success", "Student deleted successfully.")
-                self.load_students() # Refresh the list
+                self.load_students()
             else:
-                # --- DEBUGGING STEP ---
-                print(f"Failed to delete student ID: {student_id_to_delete}")
                 messagebox.showerror("Error", "Failed to delete student. This might happen if the student is referenced in other tables (e.g., in course_student, evaluation_completion, or complaints). Please ensure no dependencies exist or manually remove them if necessary, then retry.")
+
 
     def wait_window_and_refresh(self, window):
         """Helper method to wait for a Toplevel window to close and then refresh the student list."""
-        self.parent_controller.get_root_window().wait_window(window) # Wait for the Toplevel to be destroyed
-        self.load_students() # Refresh the list after the Toplevel is closed
-
+        self.parent_controller.get_root_window().wait_window(window)
+        self.load_students()

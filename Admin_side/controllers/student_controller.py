@@ -1,3 +1,4 @@
+# controllers/student_controller.py
 from database.db_manager import DBManager
 from models.student_model import Student
 
@@ -59,9 +60,21 @@ class StudentController:
         query = "DELETE FROM students WHERE student_id = %s;"
         return self.db.execute_query(query, (student_id,))
 
-    # --- New method for Dashboard ---
     def get_total_batches_count(self):
         """Counts the total number of unique batches in the system."""
         query = "SELECT COUNT(DISTINCT batch) AS count FROM students WHERE batch IS NOT NULL;"
         result = self.db.fetch_data(query, fetch_one=True)
         return result['count'] if result else 0
+
+    # --- New methods for dropdown data ---
+    def get_unique_sessions(self):
+        """Fetches all unique sessions from the database, ordered descending."""
+        query = "SELECT DISTINCT session FROM students WHERE session IS NOT NULL ORDER BY session DESC;"
+        sessions_data = self.db.fetch_data(query, fetch_all=True)
+        return [row['session'] for row in sessions_data] if sessions_data else []
+
+    def get_unique_departments(self):
+        """Fetches all unique department names from the database, ordered alphabetically."""
+        query = "SELECT DISTINCT department FROM students WHERE department IS NOT NULL ORDER BY department ASC;"
+        departments_data = self.db.fetch_data(query, fetch_all=True)
+        return [row['department'] for row in departments_data] if departments_data else []
