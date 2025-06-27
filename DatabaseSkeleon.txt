@@ -91,7 +91,7 @@ CREATE TABLE evaluation_templates (
     questions_set JSON NOT NULL,
     batch VARCHAR(20) DEFAULT NULL,
     course_code VARCHAR(20) DEFAULT NULL,
-    last_date DATE NOT NULL,
+    last_date DATE DEFAULT NULL,
     admin_id BIGINT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

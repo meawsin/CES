@@ -179,6 +179,5 @@ class AddAdminForm(tk.Toplevel):
             messagebox.showerror("Error", f"Failed to {action} admin. Please check the input (e.g., duplicate Admin ID/Email) or database connection.")
 
     def on_closing(self):
-        """Handle the window closing event."""
         self.destroy() # Explicitly destroy the Toplevel window
 

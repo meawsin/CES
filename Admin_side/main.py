@@ -40,7 +40,7 @@ class CourseEvaluationApp(tk.Tk):
         # General Button Style (e.g., for Treeview action buttons)
         self.style.configure("General.TButton",
                              font=("Arial", 10),
-                             foreground="black",
+                             foreground="black", # Ensured black
                              background="#e0e0e0", # Light grey
                              relief="raised",
                              padding=6) # Add padding for better touch/click area
@@ -51,7 +51,7 @@ class CourseEvaluationApp(tk.Tk):
         # Save Button Style (for forms like Add/Edit)
         self.style.configure("FormSave.TButton",
                              font=("Arial", 10, "bold"),
-                             foreground="black",
+                             foreground="black", # Ensured black
                              background="#28a745", # Green
                              relief="raised",
                              padding=8) # More padding for primary action
@@ -127,6 +127,17 @@ class CourseEvaluationApp(tk.Tk):
         self.style.configure("CurrentDay.TFrame", background="#e0f7fa", bordercolor="#2196f3", relief="solid", borderwidth=2)
         self.style.configure("EmptyDay.TFrame", background="#f8f9fa", relief="flat", borderwidth=0) # Lighter grey for empty days
 
+        # NEW: Style for the buttons in CreateEditTemplateForm's question management section
+        self.style.configure("QuestionForm.TButton",
+                             font=("Arial", 10),
+                             foreground="black", # Ensure black foreground
+                             background="#e0e0e0", # Light grey background
+                             relief="raised",
+                             padding=6)
+        self.style.map("QuestionForm.TButton",
+                       background=[('active', '#cccccc')],
+                       foreground=[('disabled', '#808080')])
+
 
     def _initialize_pages(self):
         self.pages["LoginPage"] = LoginPage(parent=self.container, controller=self)
@@ -175,4 +186,3 @@ if __name__ == "__main__":
     app = CourseEvaluationApp()
     app.protocol("WM_DELETE_WINDOW", app.on_closing)
     app.mainloop()
-
