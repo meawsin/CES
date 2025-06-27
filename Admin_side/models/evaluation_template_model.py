@@ -4,12 +4,14 @@ import json
 
 class EvaluationTemplate:
     def __init__(self, id, title, questions_set, batch=None, course_code=None,
+                 session=None, # NEW: Added session
                  last_date=None, admin_id=None, created_at=None, updated_at=None):
         self.id = id # This is AUTO_INCREMENT, so None for new
         self.title = title
         self.questions_set = questions_set # This will be a Python dict, stored as JSON
         self.batch = batch
         self.course_code = course_code
+        self.session = session # NEW: Added session
         self.last_date = last_date
         self.admin_id = admin_id
         self.created_at = created_at
@@ -26,6 +28,7 @@ class EvaluationTemplate:
             questions_set=json.loads(row['questions_set']) if row['questions_set'] else {}, # Load JSON string to dict
             batch=row['batch'],
             course_code=row['course_code'],
+            session=row['session'], # NEW: Added session
             last_date=row['last_date'],
             admin_id=row['admin_id'],
             created_at=row['created_at'],
@@ -40,6 +43,7 @@ class EvaluationTemplate:
             "questions_set": json.dumps(self.questions_set), # Dump dict to JSON string for DB
             "batch": self.batch,
             "course_code": self.course_code,
+            "session": self.session, # NEW: Added session
             "last_date": str(self.last_date) if self.last_date else None,
             "admin_id": self.admin_id,
             "created_at": str(self.created_at) if self.created_at else None,
