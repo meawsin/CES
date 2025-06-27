@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Course Evaluation System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .main-container {
+            display: flex;
+            flex-grow: 1;
+        }
+        .sidebar {
+            width: 256px; /* w-64 */
+            background-color: #4338ca; /* indigo-700 */
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.5rem; /* p-6 */
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        .sidebar nav a {
+            display: block;
+            padding: 0.5rem 0.75rem; /* px-3 py-2 */
+            border-radius: 0.375rem; /* rounded */
+            transition: background-color 0.2s ease;
+        }
+        .sidebar nav a:hover {
+            background-color: #4f46e5; /* indigo-600 */
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 2rem; /* p-8 */
+            background-color: #f8fafc; /* bg-slate-100 */
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem; /* p-6 */
+        }
+        .tab-button {
+            padding: 0.75rem 1.25rem; /* px-5 py-3 */
+            font-weight: 500; /* font-medium */
+            border-bottom: 3px solid transparent;
+            color: #6b7280; /* text-gray-500 */
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .tab-button:hover {
+            color: #1f2937; /* text-gray-900 */
+            border-color: #e5e7eb; /* border-gray-300 */
+        }
+        .tab-button.active {
+            color: #4338ca; /* indigo-700 */
+            border-color: #4338ca; /* indigo-700 */
+            font-weight: 600; /* font-semibold */
+        }
+        .tab-content {
+            padding-top: 1.5rem; /* pt-6 */
+        }
+        .profile-field-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .profile-field-group label {
+            width: 120px; /* Fixed width for labels */
+            font-weight: 500;
+            color: #4b5563; /* gray-700 */
+        }
+        .profile-field-group input[type="text"],
+        .profile-field-group input[type="email"],
+        .profile-field-group input[type="tel"] {
+            flex-grow: 1;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-radius: 0.375rem;
+        }
+        .editable-field {
+            cursor: pointer;
+            border-bottom: 1px dashed #9ca3af; /* gray-400 */
+        }
+        .editable-field:hover {
+            border-bottom-color: #4338ca; /* indigo-700 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <header class="bg-indigo-600 text-white p-4 shadow-md flex justify-between items-center">
+        <h1 class="text-2xl font-bold">Course Evaluation System</h1>
+        <div class="flex items-center space-x-4">
+            <span id="headerStudentName" class="text-lg font-medium"></span>
+            <button id="logoutButton" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition duration-300 ease-in-out">
+                Logout
+            </button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div>
+                <h2 class="text-2xl font-bold mb-4">Menu</h2>
+                <nav class="space-y-2">
+                    <a href="#" id="pendingEvaluationsLink" class="block hover:bg-indigo-600 px-3 py-2 rounded transition">Pending Evaluations</a>
+                    <a href="#" id="myProfileLink" class="block hover:bg-indigo-600 px-3 py-2 rounded transition">My Profile</a>
+                    <a href="#" id="completedEvaluationsLink" class="block hover:bg-indigo-600 px-3 py-2 rounded transition">Completed Evaluations</a>
+                    <a href="#" id="complaintsLink" class="block hover:bg-indigo-600 px-3 py-2 rounded transition">Submit Complaint</a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header for Main Content -->
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 id="welcomeMessage" class="text-3xl font-bold text-indigo-700">Welcome, Student! 👋</h1>
+                    <p id="studentBatchDepartment" class="text-slate-700"></p>
+                </div>
+                <img id="profileImage" src="https://placehold.co/80x80/cccccc/ffffff?text=Profile" alt="Profile Picture" class="w-20 h-20 rounded-full shadow-md border-2 border-indigo-500 object-cover">
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="border-b border-gray-200 mb-6">
+                <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                    <button id="tabPendingEvaluations" class="tab-button active">Pending Evaluations</button>
+                    <button id="tabMyProfile" class="tab-button">My Profile</button>
+                    <button id="tabCompletedEvaluations" class="tab-button">Completed Evaluations</button>
+                    <button id="tabComplaints" class="tab-button">Submit Complaint</button>
+                </nav>
+            </div>
+
+            <!-- Tab Contents -->
+            <div id="pendingEvaluationsContent" class="tab-content">
+                <h3 class="text-xl font-semibold text-indigo-700 mb-4">Evaluations Pending Your Response</h3>
+                <div id="loadingPending" class="text-center text-gray-600 text-lg">Loading pending evaluations...</div>
+                <div id="noPendingEvaluations" class="hidden text-center text-gray-600 text-lg">No pending evaluations assigned.</div>
+                <div id="pendingEvaluationsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Pending evaluations will be dynamically loaded here -->
+                </div>
+            </div>
+
+            <div id="myProfileContent" class="tab-content hidden">
+                <h3 class="text-xl font-semibold text-indigo-700 mb-4">My Profile</h3>
+                <div id="profileLoading" class="text-center text-gray-600 text-lg">Loading profile...</div>
+                <div id="profileError" class="hidden text-center text-red-600 text-lg">Failed to load profile.</div>
+                
+                <div id="profileDetails" class="space-y-4 hidden">
+                    <div class="profile-field-group">
+                        <label>Student ID:</label>
+                        <span id="profileStudentId" class="text-gray-800"></span>
+                    </div>
+                    <div class="profile-field-group">
+                        <label>Name:</label>
+                        <span id="profileName" class="text-gray-800 editable-field" data-field="name"></span>
+                        <input type="text" id="editName" class="hidden ml-2 flex-grow px-2 py-1 border rounded" />
+                    </div>
+                    <div class="profile-field-group">
+                        <label>Email:</label>
+                        <span id="profileEmail" class="text-gray-800"></span>
+                    </div>
+                    <div class="profile-field-group">
+                        <label>Contact No:</label>
+                        <span id="profileContactNo" class="text-gray-800 editable-field" data-field="contact_no"></span>
+                        <input type="tel" id="editContactNo" class="hidden ml-2 flex-grow px-2 py-1 border rounded" />
+                    </div>
+                    <div class="profile-field-group">
+                        <label>DOB:</label>
+                        <span id="profileDob" class="text-gray-800"></span>
+                    </div>
+                    <div class="profile-field-group">
+                        <label>Gender:</label>
+                        <span id="profileGender" class="text-gray-800"></span>
+                    </div>
+                    <div class="profile-field-group">
+                        <label>Session:</label>
+                        <span id="profileSession" class="text-gray-800"></span>
+                    </div>
+                    <div class="profile-field-group">
+                        <label>Batch:</label>
+                        <span id="profileBatch" class="text-gray-800"></span>
+                    </div>
+                    <div class="profile-field-group">
+                        <label>Department:</label>
+                        <span id="profileDepartment" class="text-gray-800"></span>
+                    </div>
+                    <div class="profile-field-group">
+                        <label>Enroll Date:</label>
+                        <span id="profileEnrollmentDate" class="text-gray-800"></span>
+                    </div>
+                    <div class="profile-field-group">
+                        <label>CGPA:</label>
+                        <span id="profileCgpa" class="text-gray-800"></span>
+                    </div>
+                    <div class="profile-field-group">
+                        <label>Behavioral Records:</label>
+                        <span id="profileBehavioralRecords" class="text-gray-800 editable-field" data-field="behavioral_records"></span>
+                        <textarea id="editBehavioralRecords" rows="3" class="hidden ml-2 flex-grow px-2 py-1 border rounded"></textarea>
+                    </div>
+                    <div class="profile-field-group">
+                        <label>Profile Picture URL:</label>
+                        <span id="profilePictureUrl" class="text-gray-800 editable-field" data-field="profile_picture"></span>
+                        <input type="text" id="editProfilePictureUrl" class="hidden ml-2 flex-grow px-2 py-1 border rounded" />
+                    </div>
+
+                    <button id="saveProfileButton" class="hidden mt-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md shadow transition duration-300 ease-in-out">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+
+            <div id="completedEvaluationsContent" class="tab-content hidden">
+                <h3 class="text-xl font-semibold text-indigo-700 mb-4">My Completed Evaluations</h3>
+                <div id="loadingCompleted" class="text-center text-gray-600 text-lg">Loading completed evaluations...</div>
+                <div id="noCompletedEvaluations" class="hidden text-center text-gray-600 text-lg">No completed evaluations found.</div>
+                <div id="completedEvaluationsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Completed evaluations will be dynamically loaded here -->
+                </div>
+            </div>
+
+            <div id="complaintsContent" class="tab-content hidden">
+                <h3 class="text-xl font-semibold text-indigo-700 mb-4">Submit a Complaint</h3>
+                <div class="card p-6">
+                    <form id="complaintForm" class="space-y-4">
+                        <div>
+                            <label for="complaintCourse" class="block text-sm font-medium text-gray-700">Related Course (Optional):</label>
+                            <input type="text" id="complaintCourse" placeholder="e.g., ICE-3107"
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="complaintIssueType" class="block text-sm font-medium text-gray-700">Issue Type:</label>
+                            <select id="complaintIssueType" required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                <option value="">Select an Issue Type</option>
+                                <option value="Course Content">Course Content</option>
+                                <option value="Faculty Behavior">Faculty Behavior</option>
+                                <option value="Grading">Grading</option>
+                                <option value="Technical Issue">Technical Issue</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="complaintDetails" class="block text-sm font-medium text-gray-700">Details:</label>
+                            <textarea id="complaintDetails" rows="5" required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                placeholder="Please describe your complaint in detail..."></textarea>
+                        </div>
+                        <div id="complaintMessageBox" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                            <strong class="font-bold">Error!</strong>
+                            <span class="block sm:inline" id="complaintMessageText"></span>
+                        </div>
+                        <button type="submit"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            Submit Complaint
+                        </button>
+                    </form>
+                    <div id="complaintSuccess" class="hidden text-center text-green-700 font-bold text-xl mt-6 p-4 bg-green-100 rounded-md">
+                        Complaint submitted successfully!
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+    <script src="webbackend.js"></script>
+</body>
+</html>

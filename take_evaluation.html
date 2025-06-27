@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Evaluation - Course Evaluation System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container-padding {
+            padding: 1.5rem;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+        }
+        .question-group {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <header class="bg-indigo-600 text-white p-4 shadow-md flex justify-between items-center">
+        <h1 class="text-2xl font-bold">Course Evaluation System</h1>
+        <button id="backToDashboard" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md shadow transition duration-300 ease-in-out">
+            Back to Dashboard
+        </button>
+    </header>
+
+    <main class="container mx-auto container-padding flex-grow">
+        <div id="evaluationFormContainer" class="card">
+            <h2 id="evaluationTitle" class="text-3xl font-bold text-gray-900 mb-4"></h2>
+            <p id="evaluationInstructions" class="text-gray-700 mb-6"></p>
+
+            <form id="evaluationForm" class="space-y-6">
+                <div id="questionsContainer">
+                    <!-- Questions will be dynamically loaded here -->
+                </div>
+
+                <div class="mt-8">
+                    <label for="generalComment" class="block text-lg font-medium text-gray-700 mb-2">General Comments (Optional):</label>
+                    <textarea id="generalComment" rows="4"
+                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-2"></textarea>
+                </div>
+
+                <div id="messageBox" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                    <strong class="font-bold">Error!</strong>
+                    <span class="block sm:inline" id="messageText"></span>
+                </div>
+
+                <button type="submit" 
+                        class="w-full flex justify-center py-3 px-6 border border-transparent rounded-md shadow-sm 
+                               text-lg font-medium text-white bg-green-600 hover:bg-green-700 
+                               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Submit Evaluation
+                </button>
+            </form>
+            <div id="submissionSuccess" class="hidden text-center text-green-700 font-bold text-xl mt-6 p-4 bg-green-100 rounded-md">
+                Evaluation submitted successfully! Thank you.
+                <button id="goToDashboardAfterSubmit" class="mt-4 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-md shadow transition duration-300 ease-in-out">
+                    Go to Dashboard
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:5000/api'; 
+        let currentTemplate = null; // Store the fetched template for submission
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const evalId = params.get('evalId');
+            const courseCode = params.get('courseCode'); // We'll need this for submission
+
+            if (!evalId) {
+                alert('Evaluation ID not provided.');
+                window.location.href = 'student_dashboard.html';
+                return;
+            }
+
+            const studentToken = localStorage.getItem('studentToken');
+            if (!studentToken) {
+                window.location.href = 'student_login.html';
+                return;
+            }
+
+            document.getElementById('backToDashboard').addEventListener('click', () => {
+                window.location.href = 'student_dashboard.html';
+            });
+
+            document.getElementById('goToDashboardAfterSubmit').addEventListener('click', () => {
+                window.location.href = 'student_dashboard.html';
+            });
+
+            loadEvaluationTemplate(evalId, studentToken);
+
+            document.getElementById('evaluationForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                submitEvaluation(evalId, courseCode, studentToken);
+            });
+        });
+
+        async function loadEvaluationTemplate(evalId, token) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/student/evaluations/template/${evalId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    currentTemplate = await response.json(); // Store the template
+                    document.getElementById('evaluationTitle').textContent = currentTemplate.title;
+                    document.getElementById('evaluationInstructions').textContent = currentTemplate.instructions;
+                    renderQuestions(currentTemplate.questions);
+                } else {
+                    alert('Failed to load evaluation template: ' + (await response.json()).message);
+                    window.location.href = 'student_dashboard.html';
+                }
+            } catch (error) {
+                console.error('Network error loading template:', error);
+                alert('Network error loading evaluation template.');
+                window.location.href = 'student_dashboard.html';
+            }
+        }
+
+        function renderQuestions(questions) {
+            const questionsContainer = document.getElementById('questionsContainer');
+            questionsContainer.innerHTML = ''; // Clear existing questions
+
+            questions.forEach((q, index) => {
+                const questionGroup = document.createElement('div');
+                questionGroup.className = 'question-group';
+                questionGroup.innerHTML = `<p class="font-medium text-gray-800 text-lg mb-2">${index + 1}. ${q.text}</p>`;
+
+                let inputElement;
+
+                if (q.type === 'rating') {
+                    inputElement = document.createElement('div');
+                    inputElement.className = 'flex items-center space-x-4 mt-2';
+                    for (let i = 1; i <= 5; i++) {
+                        // Using a standard scale from 1 to 5, mapping options if provided, otherwise using numbers.
+                        // For a 'rating' type, typically the value itself is the rating (e.g., 1, 2, 3, 4, 5)
+                        // and options might provide labels for these numbers (e.g., "1 (Strongly Disagree)").
+                        // For simplicity, we'll use 1-5 radio buttons.
+                        const optionValue = q.options && q.options[i-1] ? q.options[i-1] : String(i);
+                        inputElement.innerHTML += `
+                            <label class="inline-flex items-center">
+                                <input type="radio" class="form-radio text-blue-600 h-5 w-5" name="question_${index}" value="${optionValue}" required>
+                                <span class="ml-2 text-gray-700">${i}</span>
+                            </label>
+                        `;
+                    }
+                } else if (q.type === 'multiple_choice') {
+                    inputElement = document.createElement('div');
+                    inputElement.className = 'mt-2 space-y-2';
+                    q.options.forEach((option, optionIndex) => {
+                        inputElement.innerHTML += `
+                            <label class="inline-flex items-center">
+                                <input type="radio" class="form-radio text-blue-600 h-5 w-5" name="question_${index}" value="${option}" required>
+                                <span class="ml-2 text-gray-700">${option}</span>
+                            </label>
+                        `;
+                    });
+                } else if (q.type === 'text') {
+                    inputElement = document.createElement('textarea');
+                    inputElement.rows = 3;
+                    inputElement.className = 'shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 mt-2';
+                    inputElement.placeholder = 'Your answer here...';
+                    inputElement.setAttribute('name', `question_${index}`);
+                }
+                questionGroup.appendChild(inputElement);
+                questionsContainer.appendChild(questionGroup);
+            });
+        }
+
+        async function submitEvaluation(evalId, courseCode, token) {
+            const feedback = {};
+            const form = document.getElementById('evaluationForm');
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            const submissionSuccess = document.getElementById('submissionSuccess');
+
+            messageBox.classList.add('hidden');
+            submissionSuccess.classList.add('hidden');
+
+            currentTemplate.questions.forEach((q, index) => {
+                const name = `question_${index}`;
+                if (q.type === 'rating' || q.type === 'multiple_choice') {
+                    const selected = form.querySelector(`input[name="${name}"]:checked`);
+                    if (selected) {
+                        feedback[q.text] = selected.value;
+                    } else {
+                        // Handle validation for required radio buttons
+                        messageText.textContent = `Please answer question ${index + 1}.`;
+                        messageBox.classList.remove('hidden');
+                        throw new Error(`Question ${index + 1} not answered.`); // Stop submission
+                    }
+                } else if (q.type === 'text') {
+                    const textValue = form.querySelector(`textarea[name="${name}"]`).value.trim();
+                    if (textValue) { // Only include if there's text
+                        feedback[q.text] = textValue;
+                    }
+                }
+            });
+
+            const generalComment = document.getElementById('generalComment').value.trim();
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/student/evaluations/submit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        course_code: courseCode, // Pass the course code associated with this specific assignment
+                        template_id: evalId,
+                        feedback: feedback,
+                        comment: generalComment || null
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('evaluationFormContainer').classList.add('hidden'); // Hide form
+                    submissionSuccess.classList.remove('hidden'); // Show success message
+                } else {
+                    messageText.textContent = data.message || 'Submission failed. Please try again.';
+                    messageBox.classList.remove('hidden');
+                    console.error('Submission error:', data);
+                }
+            } catch (error) {
+                console.error('Network error during submission:', error);
+                messageText.textContent = 'Network error or server unavailable. Please try again later.';
+                messageBox.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
