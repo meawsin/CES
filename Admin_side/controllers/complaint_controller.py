@@ -1,19 +1,28 @@
 # controllers/complaint_controller.py
 import datetime
 from database.db_manager import DBManager
-from models.complaint_model import Complaint
+from models.complaint_model import Complaint # Assuming Complaint model is defined
 from models.student_model import Student # For getting student names
 from models.course_model import Course # For getting course names
 
 class ComplaintController:
+    """
+    Controller for managing student complaints.
+    Handles fetching, updating status, and adding admin comments.
+    """
     def __init__(self):
         self.db = DBManager()
 
     def get_all_complaints(self, status=None):
-        """Fetches all complaints, optionally filtered by status."""
+        """
+        Fetches all complaints from the database, optionally filtered by status.
+        Includes joined data for student name and course name for display.
+        :param status: Optional filter for complaint status ('pending', 'in_progress', 'resolved').
+        :return: A list of dictionaries, each representing a complaint with joined data.
+        """
         query = """
         SELECT c.id, c.student_id, s.name AS student_name, c.course_code, co.name AS course_name,
-               c.issue_type, c.details, c.status, c.created_at, c.updated_at
+               c.issue_type, c.details, c.status, c.created_at, c.updated_at, c.admin_comments
         FROM complaints c
         LEFT JOIN students s ON c.student_id = s.student_id
         LEFT JOIN courses co ON c.course_code = co.course_code
@@ -23,95 +32,73 @@ class ComplaintController:
         if status:
             query += " AND c.status = %s"
             params.append(status)
-        query += " ORDER BY c.created_at DESC;"
+        query += " ORDER BY c.created_at DESC;" # Order by most recent complaints
 
         complaints_data = self.db.fetch_data(query, tuple(params), fetch_all=True)
-        return complaints_data if complaints_data else [] # Return list of dicts with joined info
+        return complaints_data if complaints_data else [] # Returns list of dicts
 
     def get_complaint_by_id(self, complaint_id):
-        """Fetches a single complaint by ID."""
+        """
+        Fetches a single complaint record by its ID.
+        Includes joined data for student name and course name.
+        :param complaint_id: The ID of the complaint to fetch.
+        :return: A dictionary representing the complaint if found, None otherwise.
+        """
         query = """
         SELECT c.id, c.student_id, s.name AS student_name, c.course_code, co.name AS course_name,
-               c.issue_type, c.details, c.status, c.created_at, c.updated_at
+               c.issue_type, c.details, c.status, c.created_at, c.updated_at, c.admin_comments
         FROM complaints c
         LEFT JOIN students s ON c.student_id = s.student_id
         LEFT JOIN courses co ON c.course_code = co.course_code
         WHERE c.id = %s;
         """
         complaint_data = self.db.fetch_data(query, (complaint_id,), fetch_one=True)
-        return complaint_data # Returns a dict, not a Complaint object for simplicity here
+        return complaint_data # Returns a dict
 
     def update_complaint_status(self, complaint_id, new_status):
-        """Updates the status of a complaint."""
+        """
+        Updates the status of a specific complaint.
+        Validates the new status against a predefined list.
+        :param complaint_id: The ID of the complaint to update.
+        :param new_status: The new status ('pending', 'in_progress', 'resolved').
+        :return: A tuple (success_boolean, message_string).
+        """
         valid_statuses = ['pending', 'in_progress', 'resolved']
         if new_status not in valid_statuses:
             return False, "Invalid status provided."
 
-        query = "UPDATE complaints SET status = %s WHERE id = %s;"
+        query = "UPDATE complaints SET status = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s;"
         success = self.db.execute_query(query, (new_status, complaint_id))
         if success:
             return True, "Complaint status updated successfully."
         else:
-            return False, "Failed to update complaint status."
+            return False, "Failed to update complaint status. Database error."
 
     def add_complaint_comment(self, complaint_id, admin_id, comment_text):
         """
-        Adds a comment/update to a complaint.
-        NOTE: Your schema doesn't have a dedicated `complaint_log` table.
-              For now, we'll store comments as a new 'record' linked to the complaint,
-              or update the 'details' field. A dedicated table would be better.
-              For now, let's assume we're extending `details` or logging externally.
-              Since the requirement mentioned "send comments, updates", a log table is ideal.
-              Let's create a simple `complaint_log` table if it doesn't exist,
-              otherwise, we need to adapt.
-
-              For this iteration, let's just make a simple text update to `details`
-              or add a basic `comments` column to the `complaints` table.
-              Given the schema, the `details` column would be the primary place for updates.
-              We'll add a new column for comments on the `complaints` table in the database
-              if you intend for admins to add multiple discrete comments.
-              For now, let's assume `details` gets appended or a new column is needed.
-
-              **Let's refine the schema for `complaints` to have a `admin_comments` TEXT field.**
-              If you update your DB: `ALTER TABLE complaints ADD COLUMN admin_comments TEXT DEFAULT NULL;`
-              For now, I'll write the function assuming `details` is updated.
+        Appends a new comment from an admin to the `admin_comments` field of a complaint.
+        Each comment is timestamped and includes the admin's ID.
+        :param complaint_id: The ID of the complaint to add a comment to.
+        :param admin_id: The ID of the admin adding the comment.
+        :param comment_text: The content of the comment.
+        :return: A tuple (success_boolean, message_string).
         """
-        # Option 1: Append to existing 'details' (less ideal for history)
-        # current_complaint = self.get_complaint_by_id(complaint_id)
-        # if not current_complaint:
-        #     return False, "Complaint not found."
-        # new_details = f"{current_complaint['details']}\n\n--- Admin Comment by {admin_id} ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')}) ---\n{comment_text}"
-        # query = "UPDATE complaints SET details = %s WHERE id = %s;"
-        # success = self.db.execute_query(query, (new_details, complaint_id))
+        # Fetch current comments to append to, or start new if none exist
+        current_complaint = self.get_complaint_by_id(complaint_id)
+        if not current_complaint:
+            return False, "Complaint not found."
 
-        # Option 2: Ideal - use a separate `complaint_log` table
-        # Requires adding a `complaint_log` table in your DB schema.
-        # CREATE TABLE complaint_log (
-        #     log_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        #     complaint_id BIGINT,
-        #     admin_id BIGINT,
-        #     comment TEXT NOT NULL,
-        #     log_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        #     FOREIGN KEY (complaint_id) REFERENCES complaints(id) ON DELETE CASCADE,
-        #     FOREIGN KEY (admin_id) REFERENCES admins(admin_id) ON DELETE SET NULL
-        # );
-        #
-        # If this table exists:
-        # query = "INSERT INTO complaint_log (complaint_id, admin_id, comment) VALUES (%s, %s, %s);"
-        # success = self.db.execute_query(query, (complaint_id, admin_id, comment_text))
-        # if success:
-        #     return True, "Comment added successfully."
-        # else:
-        #     return False, "Failed to add comment."
+        current_comments = current_complaint.get('admin_comments', '')
+        # Format the new comment with timestamp and admin ID
+        new_comment_entry = f"\n\n--- Comment by Admin {admin_id} ({datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}) ---\n{comment_text}"
+        
+        updated_comments = current_comments + new_comment_entry
 
-        # Since we're sticking to the provided schema, let's assume comments are part of updating details
-        # OR we'll implement a simple log here for demonstration, implying it would be stored in a new column.
-        # For this version, let's just say this function would *prepare* the comment and require a DB update.
-        # For simplicity, if you add `admin_comments` TEXT to `complaints` table:
-        query = "UPDATE complaints SET admin_comments = CONCAT(IFNULL(admin_comments, ''), '\n\n--- Admin Comment by %s (%s) ---\n%s') WHERE id = %s;"
-        success = self.db.execute_query(query, (admin_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), comment_text, complaint_id))
+        query = "UPDATE complaints SET admin_comments = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s;"
+        success = self.db.execute_query(query, (updated_comments, complaint_id))
 
         if success:
             return True, "Comment added successfully."
         else:
-            return False, "Failed to add comment."
+            return False, "Failed to add comment. Database error."
+

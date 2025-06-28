@@ -89,15 +89,20 @@ class StudentController:
         return batches_data if batches_data else []
 
     # --- Student API related methods ---
-    def authenticate_student(self, email, password):
-        """Authenticates a student user."""
-        query = "SELECT * FROM students WHERE email = %s AND password = %s;"
-        student_data = self.db.fetch_data(query, (email, password), fetch_one=True)
+    def authenticate_student(self, student_id, password): # MODIFIED: Changed parameter to student_id
+        """
+        Authenticates a student user by student ID and password.
+        :param student_id: The student's ID.
+        :param password: The student's password.
+        :return: A Student object if authentication is successful, None otherwise.
+        """
+        query = "SELECT * FROM students WHERE student_id = %s AND password = %s;" # MODIFIED: Query uses student_id
+        student_data = self.db.fetch_data(query, (student_id, password), fetch_one=True)
         if student_data:
-            print(f"Authentication successful for student: {email}")
+            print(f"Authentication successful for student ID: {student_id}")
             return Student.from_db_row(student_data)
         else:
-            print(f"Authentication failed for student: {email}")
+            print(f"Authentication failed for student ID: {student_id}")
             return None
 
     def get_courses_for_student(self, student_id):
@@ -144,7 +149,7 @@ class StudentController:
     def update_student_profile(self, student_id, update_data):
         """
         Updates editable profile data for a student.
-        Expected update_data keys: name, contact_no, profile_picture, behavioral_records (optional)
+        Expected update_data keys: name, contact_no, profile_picture (optional)
         """
         student = self.get_student_by_id(student_id)
         if not student:
@@ -157,11 +162,7 @@ class StudentController:
             student.contact_no = update_data['contact_no']
         if 'profile_picture' in update_data:
             student.profile_picture = update_data['profile_picture']
-        # Note: 'behavioral_records' might typically be admin-only editable,
-        # but if the frontend allows it, we update it here.
-        if 'behavioral_records' in update_data:
-            student.behavioral_records = update_data['behavioral_records']
-
+        
         # Call the existing update_student method to persist changes
         success = self.update_student(student)
         if success:
@@ -222,3 +223,4 @@ class StudentController:
             return True, "Complaint submitted successfully."
         else:
             return False, "Failed to submit complaint. Database error."
+
