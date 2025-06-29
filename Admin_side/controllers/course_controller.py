@@ -1,4 +1,4 @@
-# controllers/course_controller.py
+# Admin_side/controllers/course_controller.py
 from database.db_manager import DBManager
 from models.course_model import Course
 from models.faculty_model import Faculty
@@ -123,3 +123,66 @@ class CourseController:
         """Removes a batch assignment from a course."""
         query = "DELETE FROM course_student WHERE course_code = %s AND batch = %s AND student_id IS NULL;"
         return self.db.execute_query(query, (course_code, batch))
+        
+    def get_course_assignments_overview(self, status=None, faculty_id=None, batch=None, department=None):
+        """
+        Fetches a combined overview of courses, their assigned faculty, and assigned students/batches.
+        Can be filtered by course status, faculty, batch, or department.
+        """
+        # Base query to get course details
+        query = """
+        SELECT
+            c.course_code,
+            c.name AS course_name,
+            c.status AS course_status
+        FROM courses c
+        WHERE 1=1
+        """
+        params = []
+
+        if status and status != "all": # Filter by status unless "all" is selected
+            query += " AND c.status = %s"
+            params.append(status)
+
+        courses_data = self.db.fetch_data(query, tuple(params), fetch_all=True)
+
+        if not courses_data:
+            return []
+
+        overview_list = []
+        for course_row in courses_data:
+            course_code = course_row['course_code']
+
+            # Get assigned faculty for this course
+            assigned_faculty_list = self.get_assigned_faculty_for_course(course_code)
+            
+            # Filter faculty if faculty_id is provided
+            if faculty_id:
+                assigned_faculty_list = [f for f in assigned_faculty_list if f['faculty_id'] == faculty_id]
+                if not assigned_faculty_list: # If no matching faculty, skip this course for the current filter
+                    continue
+
+            # Get assigned students/batches for this course
+            assigned_students_batches_list = self.get_assigned_students_batches_for_course(course_code)
+            
+            # Filter students/batches if batch or department is provided
+            if batch:
+                assigned_students_batches_list = [item for item in assigned_students_batches_list if item['batch'] == batch]
+            if department:
+                # Filter by department, checking both individual student's department and if a batch assignment has a matching department
+                # This assumes `get_assigned_students_batches_for_course` already returns `department` for both student and batch entries.
+                assigned_students_batches_list = [item for item in assigned_students_batches_list if item.get('department') == department]
+
+            # If filters applied and no assignments match, skip this course
+            if (faculty_id and not assigned_faculty_list) or ((batch or department) and not assigned_students_batches_list):
+                continue
+                
+            overview_list.append({
+                "course_code": course_row['course_code'],
+                "course_name": course_row['course_name'],
+                "course_status": course_row['course_status'],
+                "assigned_faculty": assigned_faculty_list, # List of dicts: {'faculty_id', 'name', 'email'}
+                "assigned_students_batches": assigned_students_batches_list # List of dicts: {'student_id', 'student_name', 'batch', 'department'}
+            })
+
+        return overview_list

@@ -1,4 +1,5 @@
 # Admin_side/views/app_settings_page.py
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 from controllers.app_settings_controller import AppSettingsController
@@ -20,7 +21,7 @@ class AppSettingsPage(tk.Frame):
             self.destroy() # Close the page if no admin is logged in
             return
 
-        self.configure(bg="#ecf0f1") # Set background color
+        self.configure(bg="#ECF0F1") # Set background color
         self.create_widgets() # Build the UI elements
         self.load_settings() # Load existing settings into the UI
 
@@ -30,8 +31,8 @@ class AppSettingsPage(tk.Frame):
         """
         title_label = ttk.Label(self, text="Application Settings",
                                 font=("Arial", 18, "bold"),
-                                background="#ecf0f1",
-                                foreground="#34495e")
+                                background="#ECF0F1",
+                                foreground="#34495E")
         title_label.pack(pady=10)
 
         # Frame to group settings inputs
@@ -47,8 +48,11 @@ class AppSettingsPage(tk.Frame):
         settings_frame.grid_columnconfigure(1, weight=1) # Allow the entry field to expand
 
         # Save Settings Button
-        save_button = ttk.Button(settings_frame, text="Save Settings", command=self.save_settings)
+        save_button = ttk.Button(settings_frame, text="Save Settings ✅", command=self.save_settings)
         save_button.grid(row=1, column=0, columnspan=2, pady=20) # Span two columns, add vertical padding
+        # Apply style from main.py
+        self.style = ttk.Style()
+        save_button.config(style="FormSave.TButton")
 
     def load_settings(self):
         """

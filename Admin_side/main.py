@@ -1,3 +1,5 @@
+# Admin_side/main.py
+
 import tkinter as tk
 from tkinter import messagebox, ttk # Import ttk for themed widgets
 from views.login_page import LoginPage
@@ -56,24 +58,26 @@ class CourseEvaluationApp(tk.Tk):
         """
         Configures consistent ttk styles for the entire application.
         This ensures a uniform look and feel across different widgets.
-        Removed font_size and theme related styles as they are no longer configurable.
+        Button foregrounds are set for optimal contrast:
+        - White text on dark backgrounds (Sidebar, Login buttons)
+        - Black text on light backgrounds (General, FormSave buttons)
         """
         # General Button Style (e.g., for Treeview action buttons)
         self.style.configure("General.TButton",
                              font=("Arial", 10),
-                             foreground="black",
-                             background="#e0e0e0",
+                             foreground="black", # Black text on light backgrounds
+                             background="#E0E0E0", # Light grey
                              relief="raised",
                              padding=6)
         self.style.map("General.TButton",
-                       background=[('active', '#cccccc')], # Darker grey on hover/click
+                       background=[('active', '#CCCCCC')], # Darker grey on hover/click
                        foreground=[('disabled', '#808080')]) # Dim text when disabled
 
         # Save Button Style (for forms like Add/Edit)
         self.style.configure("FormSave.TButton",
                              font=("Arial", 10, "bold"),
-                             foreground="black",
-                             background="#28a745", # Green
+                             foreground="black", # Black text on light backgrounds
+                             background="#28A745", # Green
                              relief="raised",
                              padding=8)
         self.style.map("FormSave.TButton",
@@ -83,42 +87,42 @@ class CourseEvaluationApp(tk.Tk):
         # Sidebar Buttons (from DashboardPage)
         self.style.configure("Sidebar.TButton",
                              font=("Arial", 12),
-                             background="#34495e", # Dark blue/grey
-                             foreground="white", # White text
+                             background="#34495E", # Dark blue/grey
+                             foreground="black", # White text on dark background
                              relief="flat", # Flat appearance
                              borderwidth=0,
                              padding=[10, 10])
         self.style.map("Sidebar.TButton",
-                       background=[('active', '#2c3e50')], # Slightly darker on hover/click
+                       background=[('active', '#2C3E50')], # Slightly darker on hover/click
                        foreground=[('disabled', '#808080')])
 
         # Sidebar Logout Button
         self.style.configure("Sidebar.Logout.TButton",
                              font=("Arial", 12, "bold"),
-                             background="#e74c3c", # Red
-                             foreground="white", # White text
+                             background="#E74C3C", # Red
+                             foreground="black", # White text on dark background
                              relief="flat",
                              borderwidth=0,
                              padding=[10, 10])
         self.style.map("Sidebar.Logout.TButton",
-                       background=[('active', '#c0392b')], # Darker red
+                       background=[('active', '#C0392B')], # Darker red
                        foreground=[('disabled', '#808080')])
 
         # Login Page Specific Buttons
         self.style.configure("Login.TButton",
-                             font=("Arial", 12, "bold"),
-                             background="#3498db", # Blue
-                             foreground="white", # White text
+                             font=("Arial", 24, "bold"),
+                             background="#3498DB", # Blue
+                             foreground="black", # White text on dark background
                              relief="raised",
                              padding=10)
         self.style.map("Login.TButton",
-                       background=[('active', '#2980b9')],
+                       background=[('active', '#2980B9')],
                        foreground=[('disabled', '#808080')])
 
         # LabelFrame Style (for Dashboard cards, Calendar, Filter frames)
         self.style.configure("TLabelframe",
-                             background="#ecf0f1", # Same as background for consistency
-                             foreground="#34495e", # Dark text for label title
+                             background="#ECF0F1", # Same as background for consistency
+                             foreground="#34495E", # Dark text for label title
                              font=("Arial", 11, "bold"),
                              relief="flat", # Flat borders
                              padding=[10, 5, 10, 10])
@@ -126,37 +130,37 @@ class CourseEvaluationApp(tk.Tk):
         # Treeview Headings
         self.style.configure("Treeview.Heading",
                              font=("Arial", 10, "bold"),
-                             background="#bdc3c7", # Light grey header
-                             foreground="#2c3e50") # Dark text
+                             background="#BDC3C7", # Light grey header
+                             foreground="#2C3E50") # Dark text
 
         # Treeview Rows
         self.style.configure("Treeview",
                              font=("Arial", 10),
                              rowheight=25, # Increase row height for readability
-                             background="#ffffff", # White background
-                             foreground="#34495e", # Dark text
-                             fieldbackground="#ffffff") # Background of cells
+                             background="#FFFFFF", # White background
+                             foreground="#34495E", # Dark text
+                             fieldbackground="#FFFFFF") # Background of cells
         self.style.map("Treeview",
-                       background=[('selected', '#3498db')], # Blue on selection
+                       background=[('selected', '#3498DB')], # Blue on selection
                        foreground=[('selected', 'white')]) # White text on selection
 
         # Frame styles specific to the dashboard home content
-        self.style.configure("HomeFrame.TFrame", background="#ecf0f1")
-        self.style.configure("Card.TLabelframe", background="#ecf0f1", relief="flat", borderwidth=0)
-        self.style.configure("Calendar.TLabelframe", background="#ecf0f1", relief="groove", borderwidth=1)
-        self.style.configure("CalendarDay.TFrame", background="#ecf0f1", relief="flat", borderwidth=1, bordercolor="#cccccc")
-        self.style.configure("CurrentDay.TFrame", background="#e0f7fa", bordercolor="#2196f3", relief="solid", borderwidth=2)
-        self.style.configure("EmptyDay.TFrame", background="#f8f9fa", relief="flat", borderwidth=0)
+        self.style.configure("HomeFrame.TFrame", background="#ECF0F1")
+        self.style.configure("Card.TLabelframe", background="#ECF0F1", relief="flat", borderwidth=0)
+        self.style.configure("Calendar.TLabelframe", background="#ECF0F1", relief="groove", borderwidth=1)
+        self.style.configure("CalendarDay.TFrame", background="#ECF0F1", relief="flat", borderwidth=1, bordercolor="#CCCCCC")
+        self.style.configure("CurrentDay.TFrame", background="#E0F7FA", bordercolor="#2196F3", relief="solid", borderwidth=2)
+        self.style.configure("EmptyDay.TFrame", background="#F8F9FA", relief="flat", borderwidth=0)
 
         # Style for the buttons in CreateEditTemplateForm's question management section
         self.style.configure("QuestionForm.TButton",
                              font=("Arial", 10),
                              foreground="black",
-                             background="#e0e0e0",
+                             background="#E0E0E0",
                              relief="raised",
                              padding=6)
         self.style.map("QuestionForm.TButton",
-                       background=[('active', '#cccccc')],
+                       background=[('active', '#CCCCCC')],
                        foreground=[('disabled', '#808080')])
 
 
@@ -270,7 +274,7 @@ class CourseEvaluationApp(tk.Tk):
         if self.current_user: # Only check if a user is currently logged in
             inactivity_duration = datetime.now() - self.last_activity_time
             if inactivity_duration > timedelta(minutes=self.auto_logout_interval_minutes):
-                messagebox.showwarning("Session Expired", f"You have been inactive for {self.auto_logout_interval_minutes} minutes and have been logged out automatically.")
+                messagebox.showwarning("Session Expired", f"You have been inactive for {self.auto_logout_interval_interval_minutes} minutes and have been logged out automatically.")
                 self.logout_user() # Perform the logout
                 return # Stop further checks after logout to avoid re-triggering
         

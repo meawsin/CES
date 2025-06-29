@@ -1,4 +1,5 @@
 # views/reports_page.py
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 from controllers.report_controller import ReportController
@@ -14,7 +15,7 @@ class ReportsPage(tk.Frame):
         self.course_controller = CourseController()
         self.faculty_controller = FacultyController()
 
-        self.configure(bg="#ecf0f1")
+        self.configure(bg="#ECF0F1")
         self.columnconfigure(0, weight=1)
         self.rowconfigure(1, weight=1) # Allow treeview to expand
 
@@ -24,7 +25,7 @@ class ReportsPage(tk.Frame):
         self.load_filter_options()
 
     def create_widgets(self):
-        title_label = ttk.Label(self, text="Evaluation Reports", font=("Arial", 18, "bold"), background="#ecf0f1", foreground="#34495e")
+        title_label = ttk.Label(self, text="Evaluation Reports", font=("Arial", 18, "bold"), background="#ECF0F1", foreground="#34495E")
         title_label.pack(pady=10)
 
         # Filter Frame
@@ -53,7 +54,7 @@ class ReportsPage(tk.Frame):
         self.template_id_entry.grid(row=row_idx, column=3, padx=5, pady=2, sticky="ew")
         row_idx += 1
 
-        ttk.Button(filter_frame, text="Generate Report", command=self.generate_report).grid(row=row_idx, column=0, columnspan=4, pady=10)
+        ttk.Button(filter_frame, text="Generate Report 📈", command=self.generate_report).grid(row=row_idx, column=0, columnspan=4, pady=10)
 
 
         # Report Display Area
@@ -99,9 +100,9 @@ class ReportsPage(tk.Frame):
         export_frame = ttk.Frame(self, padding="10")
         export_frame.pack(pady=10, fill="x")
         ttk.Label(export_frame, text="Export:").pack(side="left", padx=5)
-        ttk.Button(export_frame, text="Export to CSV", command=lambda: self.export_report("csv")).pack(side="left", padx=5)
-        ttk.Button(export_frame, text="Export to Excel", command=lambda: self.export_report("xlsx")).pack(side="left", padx=5)
-        ttk.Button(export_frame, text="Export to PDF", command=lambda: self.export_report("pdf")).pack(side="left", padx=5) # PDF support noted as partial
+        ttk.Button(export_frame, text="Export to CSV 📄", command=lambda: self.export_report("csv")).pack(side="left", padx=5)
+        ttk.Button(export_frame, text="Export to Excel 📊", command=lambda: self.export_report("xlsx")).pack(side="left", padx=5)
+        ttk.Button(export_frame, text="Export to PDF 📜", command=lambda: self.export_report("pdf")).pack(side="left", padx=5) # PDF support noted as partial
 
     def load_filter_options(self):
         # Load courses
@@ -197,3 +198,4 @@ class ReportsPage(tk.Frame):
 
         summary_message = self.report_controller.export_report_data(self.current_report_data, file_type)
         messagebox.showinfo("Export Status", summary_message)
+

@@ -1,4 +1,5 @@
 # views/hr_faculty_page.py
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 from controllers.faculty_controller import FacultyController
@@ -10,14 +11,14 @@ class HRFacultyPage(tk.Frame):
         self.parent_controller = controller
         self.faculty_controller = FacultyController()
 
-        self.configure(bg="#ecf0f1")
+        self.configure(bg="#ECF0F1")
         self.columnconfigure(0, weight=1)
 
         self.create_widgets()
         self.load_faculty()
 
     def create_widgets(self):
-        title_label = ttk.Label(self, text="Manage Faculty", font=("Arial", 18, "bold"), background="#ecf0f1", foreground="#34495e")
+        title_label = ttk.Label(self, text="Manage Faculty", font=("Arial", 18, "bold"), background="#ECF0F1", foreground="#34495E")
         title_label.pack(pady=10)
 
         search_frame = ttk.Frame(self, padding="10")
@@ -30,11 +31,11 @@ class HRFacultyPage(tk.Frame):
         button_frame = ttk.Frame(self, padding="10")
         button_frame.pack(pady=5, fill="x")
 
-        # Use global "General.TButton" style
-        ttk.Button(button_frame, text="Add Faculty", command=self.open_add_faculty_form, style="General.TButton").pack(side="left", padx=5)
+        # Use global "General.TButton" style and add icons
+        ttk.Button(button_frame, text="Add Faculty ➕", command=self.open_add_faculty_form, style="General.TButton").pack(side="left", padx=5)
         # Edit Faculty Button is removed as per previous request
-        ttk.Button(button_frame, text="Delete Faculty", command=self.delete_selected_faculty, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Refresh List", command=self.load_faculty, style="General.TButton").pack(side="right", padx=5)
+        ttk.Button(button_frame, text="Delete Faculty 🗑️", command=self.delete_selected_faculty, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Refresh List 🔄", command=self.load_faculty, style="General.TButton").pack(side="right", padx=5)
 
         self.tree = ttk.Treeview(self, columns=(
             "ID", "Name", "Email", "Contact No", "DOB", "Gender", "Joining Date"
@@ -149,3 +150,4 @@ class HRFacultyPage(tk.Frame):
         """Helper method to wait for a Toplevel window to close and then refresh the faculty list."""
         self.parent_controller.get_root_window().wait_window(window)
         self.load_faculty()
+

@@ -1,4 +1,5 @@
 # views/hr_students_page.py
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 from controllers.student_controller import StudentController
@@ -10,7 +11,7 @@ class HRStudentsPage(tk.Frame):
         self.parent_controller = controller # Main app controller
         self.student_controller = StudentController() # Student-specific controller
 
-        self.configure(bg="#ecf0f1")
+        self.configure(bg="#ECF0F1")
         self.columnconfigure(0, weight=1) # Allow treeview to expand
 
         self.create_widgets()
@@ -18,7 +19,7 @@ class HRStudentsPage(tk.Frame):
 
     def create_widgets(self):
         # Title
-        title_label = ttk.Label(self, text="Manage Students", font=("Arial", 18, "bold"), background="#ecf0f1", foreground="#34495e")
+        title_label = ttk.Label(self, text="Manage Students", font=("Arial", 18, "bold"), background="#ECF0F1", foreground="#34495E")
         title_label.pack(pady=10)
 
         # Search/Filter Frame
@@ -34,11 +35,11 @@ class HRStudentsPage(tk.Frame):
         button_frame = ttk.Frame(self, padding="10")
         button_frame.pack(pady=5, fill="x")
 
-        # Use global "General.TButton" style
-        ttk.Button(button_frame, text="Add Student", command=self.open_add_student_form, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Edit Student", command=self.open_edit_student_form, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Delete Student", command=self.delete_selected_student, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Refresh List", command=self.load_students, style="General.TButton").pack(side="right", padx=5)
+        # Use global "General.TButton" style and add icons
+        ttk.Button(button_frame, text="Add Student ➕", command=self.open_add_student_form, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Edit Student ✏️", command=self.open_edit_student_form, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Delete Student 🗑️", command=self.delete_selected_student, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Refresh List 🔄", command=self.load_students, style="General.TButton").pack(side="right", padx=5)
 
 
         # Students Treeview (Table) - Will pick up global Treeview styles
@@ -171,3 +172,4 @@ class HRStudentsPage(tk.Frame):
         """Helper method to wait for a Toplevel window to close and then refresh the student list."""
         self.parent_controller.get_root_window().wait_window(window)
         self.load_students()
+
