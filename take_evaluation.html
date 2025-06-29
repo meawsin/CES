@@ -6,6 +6,10 @@
     <title>Take Evaluation - Course Evaluation System</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+          xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -14,7 +18,7 @@
             display: flex;
             flex-direction: column;
         }
-        .container-padding {
+        .main-container {
             padding: 1.5rem;
         }
         .card {
@@ -25,35 +29,79 @@
         }
         .question-group {
             margin-bottom: 1.5rem;
-            padding: 1rem;
+            padding: 1.5rem; /* Increased padding */
             border: 1px solid #e2e8f0;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem; /* More rounded corners */
             background-color: #f8fafc;
+            transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out; /* Smooth hover effect */
+        }
+        .question-group:hover {
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            transform: translateY(-3px); /* Slight lift on hover */
+        }
+        /* Style for radio button options */
+        input[type="radio"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            display: inline-block;
+            position: relative;
+            width: 1.25rem; /* 20px */
+            height: 1.25rem; /* 20px */
+            border-radius: 50%;
+            border: 2px solid #a1a1aa; /* gray-400 */
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            vertical-align: middle;
+        }
+        input[type="radio"]:checked {
+            background-color: #10b981; /* emerald-500 */
+            border-color: #10b981;
+        }
+        input[type="radio"]:checked::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 0.5rem; /* 8px */
+            height: 0.5rem; /* 8px */
+            border-radius: 50%;
+            background-color: #ffffff; /* White dot */
+        }
+        /* Style for selected textareas/inputs */
+        textarea:focus, input[type="text"]:focus, input[type="tel"]:focus {
+            outline: none;
+            border-color: #10b981; /* emerald-500 */
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); /* emerald-500 with 20% opacity */
         }
     </style>
 </head>
-<body class="bg-gray-100">
-    <header class="bg-indigo-600 text-white p-4 shadow-md flex justify-between items-center">
-        <h1 class="text-2xl font-bold">Course Evaluation System</h1>
-        <button id="backToDashboard" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md shadow transition duration-300 ease-in-out">
-            Back to Dashboard
+<body class="bg-gradient-to-br from-teal-50 to-white min-h-screen flex flex-col">
+    <header class="bg-teal-700 text-white p-5 shadow-md flex justify-between items-center fixed top-0 w-full z-10">
+        <h1 class="text-2xl font-bold">📚 Course Evaluation System</h1>
+        <button id="backToDashboard" class="bg-teal-400 hover:bg-teal-300 text-teal-900 font-semibold px-4 py-2 rounded-lg shadow transition duration-300 ease-in-out transform hover:scale-105">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
         </button>
     </header>
 
-    <main class="container mx-auto container-padding flex-grow">
-        <div id="evaluationFormContainer" class="card">
-            <h2 id="evaluationTitle" class="text-3xl font-bold text-gray-900 mb-4"></h2>
-            <p id="evaluationInstructions" class="text-gray-700 mb-6"></p>
+    <main class="container mx-auto main-container flex-grow pt-20"> <!-- Added pt-20 to offset fixed header -->
+        <div id="evaluationFormContainer" class="card shadow-lg animate-fade-in">
+            <h2 id="evaluationTitle" class="text-3xl font-bold text-gray-900 mb-4 text-center"></h2>
+            <p id="evaluationInstructions" class="text-gray-700 mb-8 text-center leading-relaxed"></p>
 
-            <form id="evaluationForm" class="space-y-6">
-                <div id="questionsContainer">
+            <form id="evaluationForm" class="space-y-8">
+                <div id="questionsContainer" class="space-y-6">
                     <!-- Questions will be dynamically loaded here -->
                 </div>
 
-                <div class="mt-8">
-                    <label for="generalComment" class="block text-lg font-medium text-gray-700 mb-2">General Comments (Optional):</label>
+                <div class="mt-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
+                    <label for="generalComment" class="block text-lg font-medium text-gray-700 mb-3">
+                        <i class="fas fa-comment-dots mr-2 text-teal-600"></i>General Comments (Optional):
+                    </label>
                     <textarea id="generalComment" rows="4"
-                              class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-2"></textarea>
+                              class="shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full text-base border-gray-300 rounded-md p-3"
+                              placeholder="Share any overall thoughts or suggestions here..."></textarea>
                 </div>
 
                 <div id="messageBox" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
@@ -61,24 +109,26 @@
                     <span class="block sm:inline" id="messageText"></span>
                 </div>
 
-                <button type="submit" 
-                        class="w-full flex justify-center py-3 px-6 border border-transparent rounded-md shadow-sm 
-                               text-lg font-medium text-white bg-green-600 hover:bg-green-700 
-                               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    Submit Evaluation
+                <button type="submit"
+                        class="w-full flex justify-center items-center py-3 px-6 border border-transparent rounded-lg shadow-md
+                               text-lg font-medium text-white bg-emerald-600 hover:bg-emerald-700
+                               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500
+                               transition duration-300 ease-in-out transform hover:scale-105">
+                    <i class="fas fa-paper-plane mr-3"></i> Submit Evaluation
                 </button>
             </form>
-            <div id="submissionSuccess" class="hidden text-center text-green-700 font-bold text-xl mt-6 p-4 bg-green-100 rounded-md">
-                Evaluation submitted successfully! Thank you.
-                <button id="goToDashboardAfterSubmit" class="mt-4 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-md shadow transition duration-300 ease-in-out">
-                    Go to Dashboard
+            <div id="submissionSuccess" class="hidden text-center text-green-700 font-bold text-xl mt-6 p-6 bg-green-100 rounded-lg shadow-md animate-fade-in-up">
+                <i class="fas fa-check-circle fa-3x mb-4 text-emerald-600"></i><br>
+                Evaluation submitted successfully! Thank you for your valuable feedback.
+                <button id="goToDashboardAfterSubmit" class="mt-6 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    <i class="fas fa-home mr-2"></i>Go to Dashboard
                 </button>
             </div>
         </div>
     </main>
 
     <script>
-        const API_BASE_URL = 'http://127.0.0.1:5000/api'; 
+        const API_BASE_URL = 'http://127.0.0.1:5000/api';
         let currentTemplate = null; // Store the fetched template for submission
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -87,35 +137,41 @@
             const courseCode = params.get('courseCode'); // We'll need this for submission
 
             if (!evalId) {
-                alert('Evaluation ID not provided.');
+                // If evalId is missing, show an alert and redirect
+                alert('Evaluation ID not provided. Redirecting to dashboard.');
                 window.location.href = 'student_dashboard.html';
                 return;
             }
 
             const studentToken = localStorage.getItem('studentToken');
             if (!studentToken) {
+                // If student is not logged in, redirect to login page
+                alert('You are not logged in. Redirecting to login.');
                 window.location.href = 'student_login.html';
                 return;
             }
 
+            // Event listeners for navigation buttons
             document.getElementById('backToDashboard').addEventListener('click', () => {
                 window.location.href = 'student_dashboard.html';
             });
-
             document.getElementById('goToDashboardAfterSubmit').addEventListener('click', () => {
                 window.location.href = 'student_dashboard.html';
             });
 
+            // Load the evaluation template data
             loadEvaluationTemplate(evalId, studentToken);
 
+            // Handle form submission
             document.getElementById('evaluationForm').addEventListener('submit', (e) => {
-                e.preventDefault();
+                e.preventDefault(); // Prevent default form submission
                 submitEvaluation(evalId, courseCode, studentToken);
             });
         });
 
         async function loadEvaluationTemplate(evalId, token) {
             try {
+                // Fetch evaluation template details from the API
                 const response = await fetch(`${API_BASE_URL}/student/evaluations/template/${evalId}`, {
                     method: 'GET',
                     headers: {
@@ -124,18 +180,21 @@
                 });
 
                 if (response.ok) {
-                    currentTemplate = await response.json(); // Store the template
+                    currentTemplate = await response.json(); // Store the template data
                     document.getElementById('evaluationTitle').textContent = currentTemplate.title;
                     document.getElementById('evaluationInstructions').textContent = currentTemplate.instructions;
-                    renderQuestions(currentTemplate.questions);
+                    renderQuestions(currentTemplate.questions); // Render questions dynamically
                 } else {
-                    alert('Failed to load evaluation template: ' + (await response.json()).message);
-                    window.location.href = 'student_dashboard.html';
+                    // Handle API errors during template loading
+                    const errorData = await response.json();
+                    alert('Failed to load evaluation template: ' + (errorData.message || response.statusText));
+                    window.location.href = 'student_dashboard.html'; // Redirect on failure
                 }
             } catch (error) {
+                // Handle network errors during template loading
                 console.error('Network error loading template:', error);
-                alert('Network error loading evaluation template.');
-                window.location.href = 'student_dashboard.html';
+                alert('Network error loading evaluation template. Please check your connection.');
+                window.location.href = 'student_dashboard.html'; // Redirect on network error
             }
         }
 
@@ -145,43 +204,44 @@
 
             questions.forEach((q, index) => {
                 const questionGroup = document.createElement('div');
-                questionGroup.className = 'question-group';
-                questionGroup.innerHTML = `<p class="font-medium text-gray-800 text-lg mb-2">${index + 1}. ${q.text}</p>`;
+                questionGroup.className = 'question-group'; // Apply custom styling
+
+                // Question text
+                questionGroup.innerHTML = `<p class="font-medium text-gray-800 text-lg mb-4">${index + 1}. ${q.text}</p>`;
 
                 let inputElement;
 
+                // Render different input types based on question type
                 if (q.type === 'rating') {
                     inputElement = document.createElement('div');
-                    inputElement.className = 'flex items-center space-x-4 mt-2';
+                    inputElement.className = 'flex items-center space-x-4 mt-2 justify-center'; // Centered rating options
                     for (let i = 1; i <= 5; i++) {
-                        // Using a standard scale from 1 to 5, mapping options if provided, otherwise using numbers.
-                        // For a 'rating' type, typically the value itself is the rating (e.g., 1, 2, 3, 4, 5)
-                        // and options might provide labels for these numbers (e.g., "1 (Strongly Disagree)").
-                        // For simplicity, we'll use 1-5 radio buttons.
-                        const optionValue = q.options && q.options[i-1] ? q.options[i-1] : String(i);
+                        // Use a consistent value (the number) and display the full option text if available
+                        const optionValue = String(i);
+                        const displayLabel = q.options && q.options[i-1] ? q.options[i-1] : String(i); // Fallback to number if no text option
                         inputElement.innerHTML += `
-                            <label class="inline-flex items-center">
-                                <input type="radio" class="form-radio text-blue-600 h-5 w-5" name="question_${index}" value="${optionValue}" required>
-                                <span class="ml-2 text-gray-700">${i}</span>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" class="form-radio text-emerald-600 h-5 w-5" name="question_${index}" value="${optionValue}" required>
+                                <span class="ml-2 text-gray-700 text-base font-semibold">${displayLabel}</span>
                             </label>
                         `;
                     }
                 } else if (q.type === 'multiple_choice') {
                     inputElement = document.createElement('div');
-                    inputElement.className = 'mt-2 space-y-2';
+                    inputElement.className = 'mt-2 space-y-3'; // Vertical spacing for multiple choice
                     q.options.forEach((option, optionIndex) => {
                         inputElement.innerHTML += `
-                            <label class="inline-flex items-center">
-                                <input type="radio" class="form-radio text-blue-600 h-5 w-5" name="question_${index}" value="${option}" required>
-                                <span class="ml-2 text-gray-700">${option}</span>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" class="form-radio text-emerald-600 h-5 w-5" name="question_${index}" value="${option}" required>
+                                <span class="ml-2 text-gray-700 text-base">${option}</span>
                             </label>
                         `;
                     });
                 } else if (q.type === 'text') {
                     inputElement = document.createElement('textarea');
-                    inputElement.rows = 3;
-                    inputElement.className = 'shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 mt-2';
-                    inputElement.placeholder = 'Your answer here...';
+                    inputElement.rows = 4; // Increased rows for more space
+                    inputElement.className = 'shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full text-base border-gray-300 rounded-md p-3 mt-2';
+                    inputElement.placeholder = 'Type your answer here...';
                     inputElement.setAttribute('name', `question_${index}`);
                 }
                 questionGroup.appendChild(inputElement);
@@ -196,8 +256,10 @@
             const messageText = document.getElementById('messageText');
             const submissionSuccess = document.getElementById('submissionSuccess');
 
-            messageBox.classList.add('hidden');
-            submissionSuccess.classList.add('hidden');
+            messageBox.classList.add('hidden'); // Hide any previous error messages
+            submissionSuccess.classList.add('hidden'); // Hide success message initially
+
+            let allQuestionsAnswered = true; // Flag for validation
 
             currentTemplate.questions.forEach((q, index) => {
                 const name = `question_${index}`;
@@ -206,18 +268,23 @@
                     if (selected) {
                         feedback[q.text] = selected.value;
                     } else {
-                        // Handle validation for required radio buttons
-                        messageText.textContent = `Please answer question ${index + 1}.`;
+                        // If a required radio button is not selected
+                        messageText.textContent = `Please answer question ${index + 1}: "${q.text}".`;
                         messageBox.classList.remove('hidden');
-                        throw new Error(`Question ${index + 1} not answered.`); // Stop submission
+                        allQuestionsAnswered = false; // Set flag to false
                     }
                 } else if (q.type === 'text') {
                     const textValue = form.querySelector(`textarea[name="${name}"]`).value.trim();
-                    if (textValue) { // Only include if there's text
-                        feedback[q.text] = textValue;
+                    if (textValue) {
+                        feedback[q.text] = textValue; // Only include if text is provided
                     }
                 }
             });
+
+            if (!allQuestionsAnswered) {
+                // Stop submission if not all required questions are answered
+                return;
+            }
 
             const generalComment = document.getElementById('generalComment').value.trim();
 
@@ -232,14 +299,14 @@
                         course_code: courseCode, // Pass the course code associated with this specific assignment
                         template_id: evalId,
                         feedback: feedback,
-                        comment: generalComment || null
+                        comment: generalComment || null // Pass null if empty
                     })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    document.getElementById('evaluationFormContainer').classList.add('hidden'); // Hide form
+                    document.getElementById('evaluationFormContainer').classList.add('hidden'); // Hide the entire form
                     submissionSuccess.classList.remove('hidden'); // Show success message
                 } else {
                     messageText.textContent = data.message || 'Submission failed. Please try again.';
