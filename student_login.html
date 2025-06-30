@@ -65,6 +65,49 @@
         .wave-bg .shape-fill {
             fill: rgba(13, 175, 149, 0.1);
         }
+
+        /* Custom message box styles (copied from dashboard for consistency) */
+        .custom-message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .custom-message-box {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .custom-message-box h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .custom-message-box p {
+            margin-bottom: 1.5rem;
+            color: #4b5563;
+        }
+        .custom-message-box button {
+            background-color: #10b981; /* emerald-500 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .custom-message-box button:hover {
+            background-color: #0d9488; /* emerald-600 */
+        }
     </style>
 </head>
 <body class="relative overflow-x-hidden">
@@ -75,14 +118,6 @@
 
     <div class="login-container min-h-screen flex items-center justify-center p-4">
         <div class="card w-full max-w-md bg-white shadow-2xl rounded-2xl overflow-hidden fade-in">
-            <!-- Decorative header -->
-            <div class="bg-gradient-to-r from-[#0C6379] to-[#1DAF95] py-4 px-6">
-                <div class="flex items-center justify-center">
-                    <i class="fas fa-graduation-cap text-white text-3xl mr-3"></i>
-                    <h1 class="text-2xl font-bold text-white">Course Evaluation System</h1>
-                </div>
-            </div>
-            
             <div class="p-8 space-y-6">
                 <div class="text-center">
                     <h2 class="text-3xl font-bold text-[#0C6379]">Student Login</h2>
@@ -119,22 +154,22 @@
                         </div>
                     </div>
 
-                    <!-- Remember Me & Forgot Password -->
-                    <div class="flex items-center justify-between">
+                    <!-- Forgot Password Link -->
+                    <div class="flex items-center justify-end">
                         <div class="text-sm">
                             <a href="#" class="font-medium text-[#0C6379] hover:text-[#1DAF95]">Forgot password?</a>
                         </div>
                     </div>
 
-                    <!-- Message Box -->
-                    <div id="messageBox" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-lg" role="alert">
+                    <!-- Message Box (for login errors) -->
+                    <div id="loginMessageBox" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-lg" role="alert">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 <i class="fas fa-exclamation-circle text-red-500"></i>
                             </div>
                             <div class="ml-3">
                                 <h3 class="text-sm font-medium text-red-700">Error</h3>
-                                <div class="mt-1 text-sm text-red-600" id="messageText"></div>
+                                <div class="mt-1 text-sm text-red-600" id="loginMessageText"></div>
                             </div>
                         </div>
                     </div>
@@ -147,43 +182,38 @@
                         </button>
                     </div>
                 </form>
-
-                <div class="text-center text-sm text-gray-500">
-                    Don't have an account? 
-                    <a href="#" class="font-medium text-[#0C6379] hover:text-[#1DAF95]">Contact administrator</a>
-                </div>
             </div>
         </div>
     </div>
 
-    <!-- Wave background decoration -->
-    <div class="wave-bg">
-        <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-            <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" class="shape-fill"></path>
-            <path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5" class="shape-fill"></path>
-            <path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84-23.61,127.61-34.34,59.8-15.81,112.44-23.2,168.5-23.2,53.55,0,104.4,8.1,153.76,32.07,69.07,35.73,120.41,102.08,156.67,186.21,46.76,86.31,79.88,194.33,81.28,232.56,1.48,39.56-18.35,88.58-52.42,115.83-34.07,27.25-78.23,39.58-126.83,44.61V0Z" class="shape-fill"></path>
-        </svg>
-    </div>
 
-    <nav class="bg-teal-700 text-white p-4 shadow-md fixed top-0 w-full z-20 flex justify-between items-center">
-        <div class="flex items-center gap-4">
-            <i class="fas fa-graduation-cap text-2xl"></i>
-            <span class="text-xl font-bold">Course Evaluation System</span>
+    <!-- Custom Message Box HTML (Copied for consistency with dashboard) -->
+    <div id="customMessageBoxOverlay" class="custom-message-box-overlay hidden">
+        <div class="custom-message-box">
+            <h3 id="customMessageBoxTitle"></h3>
+            <p id="customMessageBoxContent"></p>
+            <button id="customMessageBoxCloseBtn">OK</button>
         </div>
-        <div class="flex items-center gap-6">
-            <a href="student_dashboard.html" class="hover:text-teal-200 font-semibold flex items-center gap-1"><i class="fas fa-home"></i> Dashboard</a>
-            <a href="request_faculty.html" class="hover:text-teal-200 font-semibold flex items-center gap-1"><i class="fas fa-chalkboard-teacher"></i> Request Faculty</a>
-            <a href="#" id="navComplaints" class="hover:text-teal-200 font-semibold flex items-center gap-1"><i class="fas fa-exclamation-triangle"></i> Complaints</a>
-            <a href="#" id="navPastEvaluations" class="hover:text-teal-200 font-semibold flex items-center gap-1"><i class="fas fa-clipboard-check"></i> Past Evaluations</a>
-            <button id="logoutBtn" class="bg-teal-400 hover:bg-teal-300 text-teal-900 font-semibold px-3 py-1 rounded-lg shadow transition duration-300 ease-in-out flex items-center gap-1"><i class="fas fa-sign-out-alt"></i> Logout</button>
-            <span id="headerStudentName" class="ml-4 text-lg font-medium"></span>
-            <img id="navProfileImage" src="https://placehold.co/40x40/cccccc/ffffff?text=Profile" alt="Profile" class="w-10 h-10 rounded-full border-2 border-teal-400 object-cover hidden" />
-        </div>
-    </nav>
-    <div style="height:64px;"></div>
+    </div>
 
     <script>
         const API_BASE_URL = "http://127.0.0.1:5000/api";
+
+        // Custom Message Box Elements (local to login page)
+        const customMessageBoxOverlay = document.getElementById('customMessageBoxOverlay');
+        const customMessageBoxTitle = document.getElementById('customMessageBoxTitle');
+        const customMessageBoxContent = document.getElementById('customMessageBoxContent');
+        const customMessageBoxCloseBtn = document.getElementById('customMessageBoxCloseBtn');
+
+        function showCustomMessageBox(title, message) {
+            customMessageBoxTitle.textContent = title;
+            customMessageBoxContent.textContent = message;
+            customMessageBoxOverlay.classList.remove('hidden');
+        }
+
+        customMessageBoxCloseBtn.addEventListener('click', () => {
+            customMessageBoxOverlay.classList.add('hidden');
+        });
 
         // On page load, check for existing session in localStorage only
         (function() {
@@ -191,6 +221,7 @@
             const studentId = localStorage.getItem('studentId');
             const studentName = localStorage.getItem('studentName');
             if (token && studentId && studentName) {
+                // If already logged in, redirect to dashboard
                 window.location.href = "student_dashboard.html";
             }
         })();
@@ -221,13 +252,13 @@
             
             const studentId = document.getElementById("studentId").value;
             const password = document.getElementById("password").value;
-            const messageBox = document.getElementById("messageBox");
-            const messageText = document.getElementById("messageText");
+            const loginMessageBox = document.getElementById("loginMessageBox"); // Specific for login errors
+            const loginMessageText = document.getElementById("loginMessageText"); // Specific for login errors
 
             // Show loading state
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Authenticating...';
-            messageBox.classList.add("hidden");
+            loginMessageBox.classList.add("hidden"); // Hide previous inline message
 
             try {
                 const response = await fetch(`${API_BASE_URL}/student/login`, {
@@ -248,29 +279,46 @@
                     submitBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Success!';
                     submitBtn.classList.remove('bg-gradient-to-r', 'from-[#1DAF95]', 'to-[#0C6379]', 'hover:from-[#0C6379]', 'hover:to-[#1DAF95]');
                     submitBtn.classList.add('bg-green-500');
-                    // Store token and user info in localStorage only
+                    // Store token and user info in localStorage
                     localStorage.setItem("studentToken", data.token);
                     localStorage.setItem("studentId", data.student_id);
                     localStorage.setItem("studentName", data.student_name);
-                    sessionStorage.clear();
+                    // Fetch profile to get batch/department/profile_picture and store them
+                    const profileResponse = await fetch(`${API_BASE_URL}/student/profile`, {
+                        headers: { 'Authorization': `Bearer ${data.token}` }
+                    });
+                    if (profileResponse.ok) {
+                        const profileData = await profileResponse.json();
+                        localStorage.setItem("studentBatch", profileData.batch || "N/A");
+                        localStorage.setItem("studentDepartment", profileData.department || "N/A");
+                        localStorage.setItem("profilePictureUrl", profileData.profile_picture || "https://placehold.co/80x80/cccccc/ffffff?text=Profile");
+                    } else {
+                        console.warn("Failed to fetch profile data after login.");
+                    }
+
+                    sessionStorage.clear(); // Clear any old session data
                     // Redirect after short delay
                     setTimeout(() => {
                         window.location.href = "student_dashboard.html";
                     }, 1000);
                 } else {
-                    // Show error message with shake animation
-                    messageText.textContent = data.message || "Login failed. Please check your credentials.";
-                    messageBox.classList.remove("hidden");
-                    messageBox.classList.add("animate-[shake_0.5s]");
-                    setTimeout(() => messageBox.classList.remove("animate-[shake_0.5s]"), 500);
+                    // Show error message using custom message box
+                    showCustomMessageBox('Login Failed', data.message || "Login failed. Please check your credentials.");
+                    // Also show inline error for immediate feedback
+                    loginMessageText.textContent = data.message || "Login failed. Please check your credentials.";
+                    loginMessageBox.classList.remove("hidden");
+                    loginMessageBox.classList.add("animate-[shake_0.5s]");
+                    setTimeout(() => loginMessageBox.classList.remove("animate-[shake_0.5s]"), 500);
                     // Reset button
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalBtnText;
                 }
             } catch (error) {
                 console.error("Login error:", error);
-                messageText.textContent = "Network error or server unavailable. Please try again later.";
-                messageBox.classList.remove("hidden");
+                showCustomMessageBox('Network Error', 'Network error or server unavailable. Please try again later.');
+                // Also show inline error
+                loginMessageText.textContent = "Network error or server unavailable. Please try again later.";
+                loginMessageBox.classList.remove("hidden");
                 // Reset button
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnText;

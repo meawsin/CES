@@ -12,11 +12,11 @@ class FacultyRequestController:
     def __init__(self):
         self.db = DBManager()
 
-    def submit_faculty_request(self, student_id, course_code, requested_faculty_name, details):
+    def submit_faculty_request(self, student_id, course_name, requested_faculty_name, details): # Changed course_code to course_name
         """
         Submits a new faculty request from a student.
         :param student_id: The ID of the student submitting the request.
-        :param course_code: The code of the course the faculty is requested for.
+        :param course_name: The name of the course the faculty is requested for. # Changed from course_code
         :param requested_faculty_name: The name of the faculty requested by the student (optional).
         :param details: Additional details from the student about the request.
         :return: A tuple (success_boolean, message_string).
@@ -25,18 +25,18 @@ class FacultyRequestController:
         new_request = FacultyRequest(
             request_id=None,
             student_id=student_id,
-            course_code=course_code,
+            course_name=course_name, # Changed from course_code
             requested_faculty_name=requested_faculty_name,
             details=details,
             status='pending' # Default status for new requests
         )
 
         query = """
-        INSERT INTO faculty_requests (student_id, course_code, requested_faculty_name, details, status)
+        INSERT INTO faculty_requests (student_id, course_name, requested_faculty_name, details, status) # Changed course_code to course_name
         VALUES (%s, %s, %s, %s, %s);
         """
         params = (
-            new_request.student_id, new_request.course_code,
+            new_request.student_id, new_request.course_name, # Changed course_code to course_name
             new_request.requested_faculty_name, new_request.details, new_request.status
         )
         success = self.db.execute_query(query, params)
@@ -54,12 +54,12 @@ class FacultyRequestController:
         """
         query = """
         SELECT fr.request_id, fr.student_id, s.name AS student_name,
-               fr.course_code, c.name AS course_name,
+               fr.course_name, -- Changed from fr.course_code, c.name AS course_name
                fr.requested_faculty_name, fr.details, fr.status,
                fr.admin_comment, fr.created_at, fr.updated_at
         FROM faculty_requests fr
         LEFT JOIN students s ON fr.student_id = s.student_id
-        LEFT JOIN courses c ON fr.course_code = c.course_code
+        -- Removed LEFT JOIN courses c ON fr.course_code = c.course_code
         WHERE 1=1
         """
         params = []
@@ -80,12 +80,12 @@ class FacultyRequestController:
         """
         query = """
         SELECT fr.request_id, fr.student_id, s.name AS student_name,
-               fr.course_code, c.name AS course_name,
+               fr.course_name, -- Changed from fr.course_code, c.name AS course_name
                fr.requested_faculty_name, fr.details, fr.status,
                fr.admin_comment, fr.created_at, fr.updated_at
         FROM faculty_requests fr
         LEFT JOIN students s ON fr.student_id = s.student_id
-        LEFT JOIN courses c ON fr.course_code = c.course_code
+        -- Removed LEFT JOIN courses c ON fr.course_code = c.course_code
         WHERE fr.request_id = %s;
         """
         request_data = self.db.fetch_data(query, (request_id,), fetch_one=True)
@@ -130,4 +130,3 @@ class FacultyRequestController:
             return True, "Faculty request status and comment updated successfully."
         else:
             return False, "Failed to update faculty request. Database error."
-

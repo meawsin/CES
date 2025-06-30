@@ -230,8 +230,12 @@ def submit_evaluation():
     feedback = data.get('feedback')
     comment = data.get('comment') # General comment
 
-    if not all([course_code, template_id, feedback]):
-        return jsonify({"message": "Missing required data (course_code, template_id, feedback)."}), 400
+    if not all([template_id, feedback]):
+        return jsonify({"message": "Missing required data (template_id, feedback)."}), 400
+
+    # Handle course_code - if it's "N/A" or empty, set to None
+    if course_code == "N/A" or not course_code:
+        course_code = None
 
     try:
         # Create an Evaluation object to save the feedback
@@ -253,10 +257,18 @@ def submit_evaluation():
             raise Exception("Failed to save evaluation feedback.")
 
         # Mark evaluation as complete in the evaluation_completion table
-        existing_completion = db_manager.fetch_data(
-            "SELECT id FROM evaluation_completion WHERE template_id = %s AND course_code = %s AND student_id = %s",
-            (template_id, course_code, student_id), fetch_one=True
-        )
+        # Handle null course_code for batch/session-only evaluations
+        if course_code:
+            existing_completion = db_manager.fetch_data(
+                "SELECT id FROM evaluation_completion WHERE template_id = %s AND course_code = %s AND student_id = %s",
+                (template_id, course_code, student_id), fetch_one=True
+            )
+        else:
+            # For evaluations without course_code, use NULL in the query
+            existing_completion = db_manager.fetch_data(
+                "SELECT id FROM evaluation_completion WHERE template_id = %s AND course_code IS NULL AND student_id = %s",
+                (template_id, student_id), fetch_one=True
+            )
 
         if existing_completion:
             # If a completion record already exists, update it to 'completed'
@@ -364,6 +376,34 @@ def get_completed_evaluations():
     completed_evals = student_controller.get_completed_evaluations_for_student(student_id)
     return jsonify(completed_evals), 200
 
+@app.route('/api/student/evaluations/completed/details', methods=['GET'])
+def get_completed_evaluation_details_api():
+    """
+    Retrieves the full feedback and comment for a specific completed evaluation.
+    Requires template_id and optionally course_code as query parameters.
+    """
+    token = request.headers.get('Authorization')
+    if not token or not token.startswith('Bearer '):
+        return jsonify({"message": "Authentication required."}), 401
+
+    student_id = get_student_id_from_token(token.split(' ')[1])
+    if not student_id:
+        return jsonify({"message": "Invalid session token."}), 401
+
+    template_id = request.args.get('template_id', type=int)
+    course_code = request.args.get('course_code')
+
+    if not template_id:
+        return jsonify({"message": "Missing template_id parameter."}), 400
+
+    # course_code is optional, can be None or "N/A"
+    details = student_controller.get_completed_evaluation_details(student_id, template_id, course_code)
+    if not details:
+        return jsonify({"message": "Completed evaluation details not found."}), 404
+
+    return jsonify(details), 200
+
+
 @app.route('/api/student/complaints/submit', methods=['POST'])
 def submit_complaint_api():
     """
@@ -423,15 +463,15 @@ def submit_faculty_request_api():
         return jsonify({"message": "Invalid session token."}), 401
 
     data = request.get_json()
-    course_code = data.get('course_code')
+    course_name = data.get('course_name') # Changed from course_code
     requested_faculty_name = data.get('requested_faculty_name')
     details = data.get('details')
 
-    if not all([course_code, details]):
-        return jsonify({"message": "Course code and request details are required."}), 400
+    if not all([course_name, details]): # Changed from course_code
+        return jsonify({"message": "Course name and request details are required."}), 400
 
     success, message = faculty_request_controller.submit_faculty_request(
-        student_id, course_code, requested_faculty_name, details
+        student_id, course_name, requested_faculty_name, details # Changed from course_code
     )
 
     if success:
@@ -469,4 +509,3 @@ if __name__ == '__main__':
     # Ensure this runs from the project root if using relative imports
     # Example: python -m Admin_side.api.student_api
     app.run(debug=True, port=5000)
-

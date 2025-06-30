@@ -3,6 +3,7 @@ from database.db_manager import DBManager
 from models.student_model import Student
 from models.faculty_model import Faculty
 from models.complaint_model import Complaint # NEW: Import Complaint model
+from models.course_model import Course # Import Course model to use in get_courses_by_status
 import json # For handling JSON data for complaints etc.
 
 class StudentController:
@@ -176,7 +177,7 @@ class StudentController:
         Includes evaluation details like title, course, and submission date.
         """
         query = """
-        SELECT ec.completion_date, et.title, et.course_code, c.name AS course_name
+        SELECT ec.completion_date, et.title, et.course_code, et.id AS template_id, c.name AS course_name
         FROM evaluation_completion ec
         JOIN evaluation_templates et ON ec.template_id = et.id
         LEFT JOIN courses c ON et.course_code = c.course_code
@@ -192,7 +193,8 @@ class StudentController:
                     "title": row['title'],
                     "course_code": row['course_code'] if row['course_code'] else "N/A",
                     "course_name": row['course_name'] if row['course_name'] else "N/A",
-                    "completion_date": row['completion_date'].strftime("%Y-%m-%d %H:%M") if row['completion_date'] else "N/A"
+                    "completion_date": row['completion_date'].strftime("%Y-%m-%d %H:%M") if row['completion_date'] else "N/A",
+                    "template_id": row['template_id']
                 })
         return results
 
@@ -238,3 +240,57 @@ class StudentController:
         data = self.db.fetch_data(query, (student_id,), fetch_all=True)
         return data if data else []
 
+    def get_courses_by_status(self, status):
+        """
+        Fetches courses based on their status (e.g., 'upcoming').
+        :param status: The status to filter by ('ongoing', 'finished', 'upcoming').
+        :return: A list of Course objects.
+        """
+        query = "SELECT * FROM courses WHERE status = %s ORDER BY name;"
+        courses_data = self.db.fetch_data(query, (status,), fetch_all=True)
+        if courses_data:
+            return [Course.from_db_row(row) for row in courses_data]
+        return []
+
+    def get_completed_evaluation_details(self, student_id, template_id, course_code):
+        """
+        Fetches the detailed feedback and comment for a specific completed evaluation.
+        Returns the feedback (answers) and general comment for the evaluation.
+        """
+        # Handle cases where course_code might be "N/A" or null
+        if course_code == "N/A" or not course_code:
+            # Query without course_code constraint for evaluations that might not have a specific course
+            query = """
+            SELECT feedback, comment
+            FROM evaluations
+            WHERE template_id = %s
+            ORDER BY date DESC
+            LIMIT 1;
+            """
+            eval_data = self.db.fetch_data(query, (template_id,), fetch_one=True)
+        else:
+            # Query with course_code constraint
+            query = """
+            SELECT feedback, comment
+            FROM evaluations
+            WHERE template_id = %s AND course_code = %s
+            ORDER BY date DESC
+            LIMIT 1;
+            """
+            eval_data = self.db.fetch_data(query, (template_id, course_code), fetch_one=True)
+        
+        if eval_data:
+            # Parse the feedback JSON if it's stored as a string
+            feedback = eval_data['feedback']
+            if isinstance(feedback, str):
+                try:
+                    import json
+                    feedback = json.loads(feedback)
+                except json.JSONDecodeError:
+                    feedback = {}
+            
+            return {
+                "feedback": feedback,
+                "comment": eval_data['comment']
+            }
+        return None

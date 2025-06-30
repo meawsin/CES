@@ -75,13 +75,155 @@
             border-color: #10b981; /* emerald-500 */
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); /* emerald-500 with 20% opacity */
         }
+
+        /* Custom message box styles */
+        .custom-message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .custom-message-box {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .custom-message-box h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .custom-message-box p {
+            margin-bottom: 1.5rem;
+            color: #4b5563;
+        }
+        .custom-message-box button {
+            background-color: #10b981; /* emerald-500 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .custom-message-box button:hover {
+            background-color: #0d9488; /* emerald-600 */
+        }
+
+        /* Mobile Sidebar Styles (copied from student_dashboard.html) */
+        .mobile-sidebar {
+            position: fixed;
+            top: 0;
+            left: -250px; /* Hidden by default */
+            width: 250px;
+            height: 100%;
+            background-color: #1a202c; /* Dark background for sidebar */
+            color: white;
+            transition: left 0.3s ease-in-out;
+            z-index: 50;
+            padding-top: 1rem; /* Adjusted for content within sidebar */
+            display: flex;
+            flex-direction: column;
+        }
+        .mobile-sidebar.open {
+            left: 0; /* Slide in */
+        }
+        .mobile-sidebar-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+            display: none;
+        }
+        .mobile-sidebar-backdrop.open {
+            display: block;
+        }
+
+        /* Adjust main content for mobile when sidebar is open */
+        @media (max-width: 768px) {
+            .main-content-wrapper.sidebar-open {
+                transform: translateX(250px); /* Push content to the right */
+                transition: transform 0.3s ease-in-out;
+            }
+            .main-content-wrapper {
+                transition: transform 0.3s ease-in-out; /* For smooth closing */
+            }
+            .top-nav-bar {
+                transform: translateX(0); /* Ensure top bar doesn't move with content initially */
+                transition: transform 0.3s ease-in-out;
+            }
+            .top-nav-bar.sidebar-open {
+                transform: translateX(250px); /* Push top bar to the right */
+            }
+        }
+        .sidebar-button {
+            display: none; /* Hidden by default, shown only on mobile */
+        }
+
+        /* Responsive adjustments (copied from student_dashboard.html) */
+        @media (max-width: 768px) {
+            .tab-bar-desktop {
+                display: none; /* Hide desktop tab bar on mobile */
+            }
+            .sidebar-button {
+                display: block; /* Show hamburger menu on mobile */
+            }
+            .main-content-wrapper {
+                padding-top: 4rem; /* Adjust padding for fixed header */
+            }
+            .welcome-section { /* Not directly used here, but for consistency */
+                flex-direction: column;
+                text-align: center;
+                padding: 1.5rem;
+            }
+            .welcome-section img { /* Not directly used here, but for consistency */
+                margin-top: 1rem;
+            }
+            .grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 { /* Not directly used here, but for consistency */
+                grid-template-columns: 1fr;
+            }
+            /* Adjust padding for main content on mobile */
+            .main-content-padding {
+                padding: 1rem; /* Smaller padding for main content on mobile */
+            }
+            /* Adjust font sizes for better mobile readability */
+            .text-3xl { font-size: 1.875rem; /* 30px */ }
+            .sm\:text-4xl { font-size: 2.25rem; /* 36px */ }
+            .text-lg { font-size: 1.125rem; /* 18px */ }
+            .sm\:text-xl { font-size: 1.25rem; /* 20px */ }
+            .text-2xl { font-size: 1.5rem; /* 24px */ }
+            .sm\:text-3xl { font-size: 1.875rem; /* 30px */ }
+
+            /* Hide top nav bar on mobile */
+            .top-nav-bar {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col" style="background: linear-gradient(135deg, #e1f0df 0%, #d0e8e6 100%);">
-    <!-- Improved Tab Bar Navigation -->
-    <div class="w-full bg-white shadow-sm sticky top-0 z-20">
-        <div class="flex items-center justify-between px-8" style="min-height:64px;">
-            <div class="flex gap-8">
+    <!-- Top Navigation Bar (Fixed) -->
+    <div class="w-full bg-white shadow-sm fixed top-0 left-0 z-30 top-nav-bar">
+        <div class="flex items-center justify-between px-4 sm:px-8" style="min-height:64px;">
+            <!-- Hamburger menu for mobile -->
+            <button id="sidebarToggle" class="sidebar-button p-2 text-gray-600 hover:text-teal-700 focus:outline-none">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+
+            <!-- Desktop Tab Bar Navigation -->
+            <div class="flex gap-8 tab-bar-desktop">
                 <button id="tabPendingEvaluations" class="tab-button flex items-center gap-2 text-gray-600 hover:text-teal-700 px-5 py-3 rounded-t-md transition-all">
                     <i class="fas fa-hourglass-half"></i>Pending
                 </button>
@@ -98,88 +240,276 @@
                     <i class="fas fa-chalkboard-teacher"></i>Request Faculty
                 </button>
             </div>
-            <button id="logoutBtn" class="ml-8 bg-teal-400 hover:bg-teal-300 text-teal-900 font-semibold px-6 py-2 rounded-lg shadow transition duration-300 ease-in-out flex items-center gap-2"><i class="fas fa-sign-out-alt"></i>Logout</button>
+            <button id="logoutBtn" class="ml-auto sm:ml-8 bg-teal-400 hover:bg-teal-300 text-teal-900 font-semibold px-4 py-2 rounded-lg shadow transition duration-300 ease-in-out flex items-center gap-2"><i class="fas fa-sign-out-alt"></i>Logout</button>
         </div>
     </div>
-    <!-- End Improved Tab Bar Navigation -->
-    <div style="height:64px;"></div>
+    <!-- End Top Navigation Bar -->
 
-    <main class="container mx-auto main-container flex-grow pt-20"> <!-- Added pt-20 to offset fixed header -->
-        <div id="evaluationFormContainer" class="card shadow-lg animate-fade-in">
-            <h2 id="evaluationTitle" class="text-3xl font-bold text-gray-900 mb-4 text-center"></h2>
-            <p id="evaluationInstructions" class="text-gray-700 mb-8 text-center leading-relaxed"></p>
+    <!-- Minimal Mobile Navbar (only visible on mobile) -->
+    <div id="mobileTopNavBar" class="fixed top-0 left-0 w-full bg-white shadow-sm flex items-center justify-between px-4 h-14 z-40 md:hidden">
+        <button id="mobileSidebarToggle" class="p-2 text-gray-600 hover:text-teal-700 focus:outline-none">
+            <i class="fas fa-bars text-xl"></i>
+        </button>
+        <span id="mobileStudentId" class="text-gray-700 font-semibold text-sm"></span>
+        <button id="mobileLogoutBtnTop" class="bg-teal-400 hover:bg-teal-300 text-teal-900 font-semibold px-3 py-1 rounded-lg shadow transition duration-300 ease-in-out flex items-center gap-1 text-sm">
+            <i class="fas fa-sign-out-alt"></i>Logout
+        </button>
+    </div>
+    <!-- End Minimal Mobile Navbar -->
 
-            <!-- Timer Display -->
-            <div id="evaluationTimer" class="text-center text-lg font-bold text-red-600 my-4"></div>
-
-            <form id="evaluationForm" class="space-y-8">
-                <div id="questionsContainer" class="space-y-6">
-                    <!-- Questions will be dynamically loaded here -->
-                </div>
-
-                <div class="mt-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
-                    <label for="generalComment" class="block text-lg font-medium text-gray-700 mb-3">
-                        <i class="fas fa-comment-dots mr-2 text-teal-600"></i>General Comments (Optional):
-                    </label>
-                    <textarea id="generalComment" rows="4"
-                              class="shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full text-base border-gray-300 rounded-md p-3"
-                              placeholder="Share any overall thoughts or suggestions here..."></textarea>
-                </div>
-
-                <div id="messageBox" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                    <strong class="font-bold">Error!</strong>
-                    <span class="block sm:inline" id="messageText"></span>
-                </div>
-
-                <button type="submit"
-                        class="w-full flex justify-center items-center py-3 px-6 border border-transparent rounded-lg shadow-md
-                               text-lg font-medium text-white bg-emerald-600 hover:bg-emerald-700
-                               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500
-                               transition duration-300 ease-in-out transform hover:scale-105">
-                    <i class="fas fa-paper-plane mr-3"></i> Submit Evaluation
-                </button>
-            </form>
-            <div id="submissionSuccess" class="hidden text-center text-green-700 font-bold text-xl mt-6 p-6 bg-green-100 rounded-lg shadow-md animate-fade-in-up">
-                <i class="fas fa-check-circle fa-3x mb-4 text-emerald-600"></i><br>
-                Evaluation submitted successfully! Thank you for your valuable feedback.
-                <button id="goToDashboardAfterSubmit" class="mt-6 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                    <i class="fas fa-home mr-2"></i>Go to Dashboard
-                </button>
-            </div>
+    <!-- Mobile Sidebar (Hidden by default) -->
+    <div id="mobileSidebar" class="mobile-sidebar shadow-lg">
+        <div class="flex flex-col items-center p-4 border-b border-gray-700">
+            <img id="mobileProfileImage" src="https://placehold.co/80x80/cccccc/ffffff?text=Profile" alt="Profile Picture" class="w-20 h-20 rounded-full border-2 border-teal-400 object-cover mb-2" />
+            <span id="mobileStudentName" class="text-lg font-bold text-white"></span>
+            <span id="mobileStudentBatchDepartment" class="text-sm text-gray-300"></span>
         </div>
-    </main>
+        <div class="flex-grow overflow-y-auto">
+            <button class="tab-button flex items-center gap-2 text-white hover:bg-gray-700 px-5 py-3 transition-all w-full text-left" data-tab-name="pendingEvaluations">
+                <i class="fas fa-hourglass-half"></i>Pending Evaluations
+            </button>
+            <button class="tab-button flex items-center gap-2 text-white hover:bg-gray-700 px-5 py-3 transition-all w-full text-left" data-tab-name="myProfile">
+                <i class="fas fa-user"></i>My Profile
+            </button>
+            <button class="tab-button flex items-center gap-2 text-white hover:bg-gray-700 px-5 py-3 transition-all w-full text-left" data-tab-name="completedEvaluations">
+                <i class="fas fa-clipboard-check"></i>Completed Evaluations
+            </button>
+            <button class="tab-button flex items-center gap-2 text-white hover:bg-gray-700 px-5 py-3 transition-all w-full text-left" data-tab-name="complaints">
+                <i class="fas fa-comment-alt"></i>Complaints
+            </button>
+            <button class="tab-button flex items-center gap-2 text-white hover:bg-gray-700 px-5 py-3 transition-all w-full text-left" data-tab-name="requestFaculty">
+                <i class="fas fa-chalkboard-teacher"></i>Request Faculty
+            </button>
+        </div>
+        </div>
+    <div id="mobileSidebarBackdrop" class="mobile-sidebar-backdrop"></div>
+
+
+    <div class="flex flex-grow pt-16 main-content-wrapper"> <!-- Adjusted pt-16 for fixed header height -->
+
+        <!-- Main Content -->
+        <main class="flex-grow p-4 sm:p-8 space-y-10 overflow-auto mx-auto max-w-4xl w-full main-content-padding"> <!-- Adjusted max-w to 4xl for better content width -->
+            <div id="evaluationFormContainer" class="card shadow-lg animate-fade-in">
+                <h2 id="evaluationTitle" class="text-3xl font-bold text-gray-900 mb-4 text-center"></h2>
+                <p id="evaluationInstructions" class="text-gray-700 mb-8 text-center leading-relaxed"></p>
+
+                <!-- Timer Display -->
+                <div id="evaluationTimer" class="text-center text-lg font-bold text-red-600 my-4"></div>
+
+                <form id="evaluationForm" class="space-y-8">
+                    <div id="questionsContainer" class="space-y-6">
+                        <!-- Questions will be dynamically loaded here -->
+                    </div>
+
+                    <div class="mt-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
+                        <label for="generalComment" class="block text-lg font-medium text-gray-700 mb-3">
+                            <i class="fas fa-comment-dots mr-2 text-teal-600"></i>General Comments (Optional):
+                        </label>
+                        <textarea id="generalComment" rows="4"
+                                class="shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full text-base border-gray-300 rounded-md p-3"
+                                placeholder="Share any overall thoughts or suggestions here..."></textarea>
+                    </div>
+
+                    <button type="submit"
+                            class="w-full flex justify-center items-center py-3 px-6 border border-transparent rounded-lg shadow-md
+                                text-lg font-medium text-white bg-emerald-600 hover:bg-emerald-700
+                                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500
+                                transition duration-300 ease-in-out transform hover:scale-105">
+                        <i class="fas fa-paper-plane mr-3"></i> Submit Evaluation
+                    </button>
+                </form>
+                <div id="submissionSuccess" class="hidden text-center text-green-700 font-bold text-xl mt-6 p-6 bg-green-100 rounded-lg shadow-md animate-fade-in-up">
+                    <i class="fas fa-check-circle fa-3x mb-4 text-emerald-600"></i><br>
+                    Evaluation submitted successfully! Thank you for your valuable feedback.
+                    <button id="goToDashboardAfterSubmit" class="mt-6 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                        <i class="fas fa-home mr-2"></i>Go to Dashboard
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Custom Message Box HTML -->
+    <div id="customMessageBoxOverlay" class="custom-message-box-overlay hidden">
+        <div class="custom-message-box">
+            <h3 id="customMessageBoxTitle"></h3>
+            <p id="customMessageBoxContent"></p>
+            <button id="customMessageBoxCloseBtn">OK</button>
+        </div>
+    </div>
 
     <script>
         const API_BASE_URL = 'http://127.0.0.1:5000/api';
         let currentTemplate = null; // Store the fetched template for submission
+        let timerDuration = 45 * 60; // 45 minutes in seconds (default)
+        let timerInterval;
+
+        // Custom Message Box Elements
+        const customMessageBoxOverlay = document.getElementById('customMessageBoxOverlay');
+        const customMessageBoxTitle = document.getElementById('customMessageBoxTitle');
+        const customMessageBoxContent = document.getElementById('customMessageBoxContent');
+        const customMessageBoxCloseBtn = document.getElementById('customMessageBoxCloseBtn');
+
+        // --- Custom Message Box Function ---
+        function showCustomMessageBox(title, message) {
+            customMessageBoxTitle.textContent = title;
+            customMessageBoxContent.textContent = message;
+            customMessageBoxOverlay.classList.remove('hidden');
+        }
+
+        customMessageBoxCloseBtn.addEventListener('click', () => {
+            customMessageBoxOverlay.classList.add('hidden');
+        });
+
+        // --- Robust Error Handling Helper ---
+        function handleApiError(response) {
+            if (response.status === 401) {
+                showCustomMessageBox('Session Expired', 'Your session has expired. Please log in again.');
+                localStorage.clear();
+                // Redirect to login page only after user acknowledges the message
+                customMessageBoxCloseBtn.onclick = () => { window.location.href = 'student_login.html'; };
+                return true;
+            }
+            return false;
+        }
+
+        async function authenticatedFetch(url, options = {}) {
+            const studentToken = localStorage.getItem("studentToken");
+            if (!studentToken) {
+                showCustomMessageBox('Authentication Required', 'Session expired or not logged in. Please log in again.');
+                localStorage.clear();
+                customMessageBoxCloseBtn.onclick = () => { window.location.href = "student_login.html"; };
+                throw new Error("No authentication token found.");
+            }
+            options.headers = {
+                ...options.headers,
+                Authorization: `Bearer ${studentToken}`,
+            };
+            let response;
+            try {
+                response = await fetch(url, options);
+            } catch (err) {
+                showCustomMessageBox('Network Error', 'Could not connect to the server. Please check your internet connection or API server status.');
+                throw err;
+            }
+            if (handleApiError(response)) {
+                throw new Error('API error handled and redirected.');
+            }
+            return response;
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const evalId = params.get('evalId');
             const courseCode = params.get('courseCode'); // We'll need this for submission
 
+            // Mobile sidebar elements
+            const sidebarToggle = document.getElementById("sidebarToggle");
+            const mobileSidebar = document.getElementById("mobileSidebar");
+            const mobileSidebarBackdrop = document.getElementById("mobileSidebarBackdrop");
+            const mobileProfileImage = document.getElementById("mobileProfileImage");
+            const mobileStudentName = document.getElementById("mobileStudentName");
+            const mobileStudentBatchDepartment = document.getElementById("mobileStudentBatchDepartment");
+            const mobileLogoutBtn = document.getElementById("mobileLogoutBtn");
+            const mobileSidebarTabButtons = document.querySelectorAll("#mobileSidebar .tab-button");
+
+
             if (!evalId) {
-                // If evalId is missing, show an alert and redirect
-                alert('Evaluation ID not provided. Redirecting to dashboard.');
-                window.location.href = 'student_dashboard.html';
+                showCustomMessageBox('Error', 'Evaluation ID not provided. Redirecting to dashboard.');
+                setTimeout(() => {
+                    window.location.href = 'student_dashboard.html';
+                }, 2000); // Give time for user to read message
                 return;
             }
 
             const studentToken = localStorage.getItem('studentToken');
             if (!studentToken) {
-                // If student is not logged in, redirect to login page
-                alert('You are not logged in. Redirecting to login.');
-                window.location.href = 'student_login.html';
+                showCustomMessageBox('Authentication Required', 'You are not logged in. Redirecting to login.');
+                setTimeout(() => {
+                    window.location.href = 'student_login.html';
+                }, 2000); // Give time for user to read message
                 return;
             }
 
-            // Event listeners for navigation buttons
-            document.getElementById('backToDashboard').addEventListener('click', () => {
-                window.location.href = 'student_dashboard.html';
-            });
+            // Populate mobile sidebar user info
+            if (mobileStudentName) mobileStudentName.textContent = localStorage.getItem("studentName") || "";
+            if (mobileStudentBatchDepartment) mobileStudentBatchDepartment.textContent = `Batch: ${localStorage.getItem("studentBatch") || "N/A"}, Dept: ${localStorage.getItem("studentDepartment") || "N/A"}`;
+            if (mobileProfileImage) mobileProfileImage.src = localStorage.getItem("profilePictureUrl") || "https://placehold.co/80x80/cccccc/ffffff?text=Profile";
+
+
+            // Event listeners for top navigation buttons (desktop)
+            // Added null checks for desktop tab buttons as they are hidden on mobile
+            const logoutBtnDesktop = document.getElementById('logoutBtn');
+            if (logoutBtnDesktop) {
+                logoutBtnDesktop.addEventListener('click', async () => {
+                    try {
+                        await authenticatedFetch(`${API_BASE_URL}/student/logout`, { method: "POST" });
+                    } catch (error) {
+                        console.error("Logout API failed, but proceeding with client-side logout:", error);
+                    } finally {
+                        localStorage.clear();
+                        window.location.href = "student_login.html";
+                    }
+                });
+            }
+
+            const tabPendingEvaluations = document.getElementById('tabPendingEvaluations');
+            const tabMyProfile = document.getElementById('tabMyProfile');
+            const tabCompletedEvaluations = document.getElementById('tabCompletedEvaluations');
+            const tabComplaints = document.getElementById('tabComplaints');
+            const tabRequestFaculty = document.getElementById('tabRequestFaculty');
+
+            if (tabPendingEvaluations) tabPendingEvaluations.addEventListener('click', () => { window.location.href = 'student_dashboard.html?tab=pendingEvaluations'; });
+            if (tabMyProfile) tabMyProfile.addEventListener('click', () => { window.location.href = 'student_dashboard.html?tab=myProfile'; });
+            if (tabCompletedEvaluations) tabCompletedEvaluations.addEventListener('click', () => { window.location.href = 'student_dashboard.html?tab=completedEvaluations'; });
+            if (tabComplaints) tabComplaints.addEventListener('click', () => { window.location.href = 'student_dashboard.html?tab=complaints'; });
+            if (tabRequestFaculty) tabRequestFaculty.addEventListener('click', () => { window.location.href = 'student_dashboard.html?tab=requestFaculty'; });
+
+
             document.getElementById('goToDashboardAfterSubmit').addEventListener('click', () => {
                 window.location.href = 'student_dashboard.html';
             });
+
+            // Mobile sidebar toggle
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', toggleSidebar);
+            }
+            if (mobileSidebarBackdrop) {
+                mobileSidebarBackdrop.addEventListener('click', toggleSidebar);
+            }
+
+            function toggleSidebar() {
+                if (mobileSidebar) mobileSidebar.classList.toggle('open');
+                if (mobileSidebarBackdrop) mobileSidebarBackdrop.classList.toggle('open');
+                document.body.classList.toggle('overflow-hidden'); // Prevent scrolling body
+                const mainContentWrapper = document.querySelector('.main-content-wrapper');
+                const topNavBar = document.querySelector('.top-nav-bar');
+                if (mainContentWrapper) mainContentWrapper.classList.toggle('sidebar-open');
+                if (topNavBar) topNavBar.classList.toggle('sidebar-open');
+            }
+
+            // Mobile sidebar navigation
+            if (mobileSidebarTabButtons) {
+                mobileSidebarTabButtons.forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const tabName = event.currentTarget.dataset.tabName;
+                        window.location.href = `student_dashboard.html?tab=${tabName}`;
+                    });
+                });
+            }
+            if (mobileLogoutBtn) {
+                mobileLogoutBtn.addEventListener('click', async () => {
+                    try {
+                        await authenticatedFetch(`${API_BASE_URL}/student/logout`, { method: "POST" });
+                    } catch (error) {
+                        console.error("Logout API failed, but proceeding with client-side logout:", error);
+                    } finally {
+                        localStorage.clear();
+                        window.location.href = "student_login.html";
+                    }
+                });
+            }
+
 
             // Load the evaluation template data
             loadEvaluationTemplate(evalId, studentToken);
@@ -190,62 +520,83 @@
                 submitEvaluation(evalId, courseCode, studentToken);
             });
 
-            // Timer logic
-            let timerDuration = 45 * 60; // 45 minutes in seconds (default)
-            let timerInterval;
+            startEvaluationTimer(timerDuration);
 
-            function startEvaluationTimer(duration) {
-                let timeLeft = duration;
-                const timerDisplay = document.getElementById('evaluationTimer');
-                function updateTimer() {
+            // Add event listeners for mobile top nav bar
+            const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
+            const mobileLogoutBtnTop = document.getElementById('mobileLogoutBtnTop');
+            const mobileStudentId = document.getElementById('mobileStudentId');
+            if (mobileSidebarToggle) mobileSidebarToggle.addEventListener('click', toggleSidebar);
+            if (mobileLogoutBtnTop) mobileLogoutBtnTop.addEventListener('click', async () => {
+                try {
+                    await authenticatedFetch(`${API_BASE_URL}/student/logout`, { method: "POST" });
+                } catch (error) {
+                    console.error("Logout API failed, but proceeding with client-side logout:", error);
+                } finally {
+                    localStorage.clear();
+                    window.location.href = "student_login.html";
+                }
+            });
+            // Set student ID in mobile navbar
+            if (mobileStudentId) mobileStudentId.textContent = localStorage.getItem('studentId') || '';
+        });
+
+        function startEvaluationTimer(duration) {
+            let timeLeft = duration;
+            const timerDisplay = document.getElementById('evaluationTimer');
+            function updateTimer() {
+                if (timerDisplay) { // Null check for timerDisplay
                     const minutes = Math.floor(timeLeft / 60);
                     const seconds = timeLeft % 60;
                     timerDisplay.textContent = `You have ${minutes}m ${seconds.toString().padStart(2, '0')}s left to complete this evaluation.`;
                     if (timeLeft <= 0) {
                         clearInterval(timerInterval);
-                        timerDisplay.textContent = 'Time is up! Your evaluation is being submitted...';
-                        document.getElementById('evaluationForm').submit();
-                        // Optionally, disable all inputs here
+                        timerDisplay.textContent = 'Time is up! Submitting your evaluation...';
+                        submitEvaluation(new URLSearchParams(window.location.search).get('evalId'), new URLSearchParams(window.location.search).get('courseCode'), localStorage.getItem('studentToken'), true); // Force submit
                     }
                     timeLeft--;
+                } else {
+                    clearInterval(timerInterval); // Stop if element not found
                 }
-                updateTimer();
-                timerInterval = setInterval(updateTimer, 1000);
             }
-            startEvaluationTimer(timerDuration);
-        });
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
 
         async function loadEvaluationTemplate(evalId, token) {
             try {
-                // Fetch evaluation template details from the API
-                const response = await fetch(`${API_BASE_URL}/student/evaluations/template/${evalId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+                const response = await authenticatedFetch(`${API_BASE_URL}/student/evaluations/template/${evalId}`);
 
                 if (response.ok) {
                     currentTemplate = await response.json(); // Store the template data
-                    document.getElementById('evaluationTitle').textContent = currentTemplate.title;
-                    document.getElementById('evaluationInstructions').textContent = currentTemplate.instructions;
+                    const evaluationTitle = document.getElementById('evaluationTitle');
+                    const evaluationInstructions = document.getElementById('evaluationInstructions');
+
+                    if (evaluationTitle) evaluationTitle.textContent = currentTemplate.title;
+                    if (evaluationInstructions) evaluationInstructions.textContent = currentTemplate.instructions;
                     renderQuestions(currentTemplate.questions); // Render questions dynamically
                 } else {
-                    // Handle API errors during template loading
                     const errorData = await response.json();
-                    alert('Failed to load evaluation template: ' + (errorData.message || response.statusText));
-                    window.location.href = 'student_dashboard.html'; // Redirect on failure
+                    showCustomMessageBox('Error', 'Failed to load evaluation template: ' + (errorData.message || response.statusText));
+                    setTimeout(() => {
+                        window.location.href = 'student_dashboard.html';
+                    }, 2000);
                 }
             } catch (error) {
-                // Handle network errors during template loading
+                // Error handled by authenticatedFetch
                 console.error('Network error loading template:', error);
-                alert('Network error loading evaluation template. Please check your connection.');
-                window.location.href = 'student_dashboard.html'; // Redirect on network error
+                setTimeout(() => {
+                    window.location.href = 'student_dashboard.html';
+                }, 2000);
             }
         }
 
         function renderQuestions(questions) {
             const questionsContainer = document.getElementById('questionsContainer');
+            if (!questionsContainer) {
+                console.error("Questions container not found.");
+                return;
+            }
             questionsContainer.innerHTML = ''; // Clear existing questions
 
             questions.forEach((q, index) => {
@@ -259,12 +610,13 @@
 
                 // Render different input types based on question type
                 if (q.type === 'rating') {
+                    // Changed to flex-col for stacking options vertically
                     inputElement = document.createElement('div');
-                    inputElement.className = 'flex items-center space-x-4 mt-2 justify-center'; // Centered rating options
+                    inputElement.className = 'flex flex-col items-start space-y-2 mt-2'; // Stack vertically, align items to start
+
                     for (let i = 1; i <= 5; i++) {
-                        // Use a consistent value (the number) and display the full option text if available
                         const optionValue = String(i);
-                        const displayLabel = q.options && q.options[i-1] ? q.options[i-1] : String(i); // Fallback to number if no text option
+                        const displayLabel = q.options && q.options[i-1] ? q.options[i-1] : String(i);
                         inputElement.innerHTML += `
                             <label class="inline-flex items-center cursor-pointer">
                                 <input type="radio" class="form-radio text-emerald-600 h-5 w-5" name="question_${index}" value="${optionValue}" required>
@@ -295,47 +647,62 @@
             });
         }
 
-        async function submitEvaluation(evalId, courseCode, token) {
+        async function submitEvaluation(evalId, courseCode, token, isTimedOut = false) {
             const feedback = {};
             const form = document.getElementById('evaluationForm');
-            const messageBox = document.getElementById('messageBox');
-            const messageText = document.getElementById('messageText');
             const submissionSuccess = document.getElementById('submissionSuccess');
 
-            messageBox.classList.add('hidden'); // Hide any previous error messages
-            submissionSuccess.classList.add('hidden'); // Hide success message initially
-
-            let allQuestionsAnswered = true; // Flag for validation
-
-            currentTemplate.questions.forEach((q, index) => {
-                const name = `question_${index}`;
-                if (q.type === 'rating' || q.type === 'multiple_choice') {
-                    const selected = form.querySelector(`input[name="${name}"]:checked`);
-                    if (selected) {
-                        feedback[q.text] = selected.value;
-                    } else {
-                        // If a required radio button is not selected
-                        messageText.textContent = `Please answer question ${index + 1}: "${q.text}".`;
-                        messageBox.classList.remove('hidden');
-                        allQuestionsAnswered = false; // Set flag to false
-                    }
-                } else if (q.type === 'text') {
-                    const textValue = form.querySelector(`textarea[name="${name}"]`).value.trim();
-                    if (textValue) {
-                        feedback[q.text] = textValue; // Only include if text is provided
-                    }
-                }
-            });
-
-            if (!allQuestionsAnswered) {
-                // Stop submission if not all required questions are answered
+            if (!form || !submissionSuccess) {
+                console.error("Form or submission success element not found.");
                 return;
             }
 
-            const generalComment = document.getElementById('generalComment').value.trim();
+            // Only validate if not timed out, otherwise submit whatever is available
+            if (!isTimedOut) {
+                let allQuestionsAnswered = true; // Flag for validation
+                currentTemplate.questions.forEach((q, index) => {
+                    const name = `question_${index}`;
+                    if (q.type === 'rating' || q.type === 'multiple_choice') {
+                        const selected = form.querySelector(`input[name="${name}"]:checked`);
+                        if (selected) {
+                            feedback[q.text] = selected.value;
+                        } else {
+                            showCustomMessageBox('Validation Error', `Please answer question ${index + 1}: "${q.text}".`);
+                            allQuestionsAnswered = false; // Set flag to false
+                        }
+                    } else if (q.type === 'text') {
+                        const textValue = form.querySelector(`textarea[name="${name}"]`).value.trim();
+                        feedback[q.text] = textValue || ""; // Store empty string if no text
+                    }
+                });
+
+                if (!allQuestionsAnswered) {
+                    return; // Stop submission if not all required questions are answered
+                }
+            } else {
+                // For timed out submissions, collect all available answers (even if not strictly valid)
+                currentTemplate.questions.forEach((q, index) => {
+                    const name = `question_${index}`;
+                    if (q.type === 'rating' || q.type === 'multiple_choice') {
+                        const selected = form.querySelector(`input[name="${name}"]:checked`);
+                        if (selected) {
+                            feedback[q.text] = selected.value;
+                        } else {
+                            feedback[q.text] = "No Answer (Timed Out)"; // Indicate unanswered
+                        }
+                    } else if (q.type === 'text') {
+                        const textArea = form.querySelector(`textarea[name="${name}"]`);
+                        const textValue = textArea ? textArea.value.trim() : '';
+                        feedback[q.text] = textValue || "No Answer (Timed Out)";
+                    }
+                });
+            }
+
+            const generalComment = document.getElementById('generalComment');
+            const finalGeneralComment = generalComment ? generalComment.value.trim() : '';
 
             try {
-                const response = await fetch(`${API_BASE_URL}/student/evaluations/submit`, {
+                const response = await authenticatedFetch(`${API_BASE_URL}/student/evaluations/submit`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -345,24 +712,33 @@
                         course_code: courseCode, // Pass the course code associated with this specific assignment
                         template_id: evalId,
                         feedback: feedback,
-                        comment: generalComment || null // Pass null if empty
+                        comment: finalGeneralComment || null // Pass null if empty
                     })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    document.getElementById('evaluationFormContainer').classList.add('hidden'); // Hide the entire form
+                    clearInterval(timerInterval); // Stop the timer
+                    const evaluationFormContainer = document.getElementById('evaluationFormContainer');
+                    if (evaluationFormContainer) evaluationFormContainer.classList.add('hidden'); // Hide the entire form
                     submissionSuccess.classList.remove('hidden'); // Show success message
+                    
+                    // Add event listener for the "Go to Dashboard" button
+                    const goToDashboardBtn = document.getElementById('goToDashboardAfterSubmit');
+                    if (goToDashboardBtn) {
+                        goToDashboardBtn.addEventListener('click', () => {
+                            // Redirect to dashboard with pending evaluations tab active
+                            window.location.href = 'student_dashboard.html?tab=pendingEvaluations';
+                        });
+                    }
                 } else {
-                    messageText.textContent = data.message || 'Submission failed. Please try again.';
-                    messageBox.classList.remove('hidden');
+                    showCustomMessageBox('Submission Failed', data.message || 'Submission failed. Please try again.');
                     console.error('Submission error:', data);
                 }
             } catch (error) {
                 console.error('Network error during submission:', error);
-                messageText.textContent = 'Network error or server unavailable. Please try again later.';
-                messageBox.classList.remove('hidden');
+                showCustomMessageBox('Network Error', 'Network error or server unavailable. Please try again later.');
             }
         }
     </script>

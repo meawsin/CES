@@ -2,11 +2,11 @@
 from datetime import datetime
 
 class FacultyRequest:
-    def __init__(self, request_id, student_id, course_code, requested_faculty_name,
+    def __init__(self, request_id, student_id, course_name, requested_faculty_name, # Changed course_code to course_name
                  details, status, admin_comment=None, created_at=None, updated_at=None):
         self.request_id = request_id # AUTO_INCREMENT, so None for new
         self.student_id = student_id
-        self.course_code = course_code
+        self.course_name = course_name # Changed from course_code
         self.requested_faculty_name = requested_faculty_name
         self.details = details
         self.status = status
@@ -22,7 +22,7 @@ class FacultyRequest:
         return FacultyRequest(
             request_id=row['request_id'],
             student_id=row['student_id'],
-            course_code=row['course_code'],
+            course_name=row['course_name'], # Changed from course_code
             requested_faculty_name=row['requested_faculty_name'],
             details=row['details'],
             status=row['status'],
@@ -36,7 +36,7 @@ class FacultyRequest:
         return {
             "request_id": self.request_id,
             "student_id": self.student_id,
-            "course_code": self.course_code,
+            "course_name": self.course_name, # Changed from course_code
             "requested_faculty_name": self.requested_faculty_name,
             "details": self.details,
             "status": self.status,
@@ -44,4 +44,3 @@ class FacultyRequest:
             "created_at": str(self.created_at) if self.created_at else None,
             "updated_at": str(self.updated_at) if self.updated_at else None
         }
-

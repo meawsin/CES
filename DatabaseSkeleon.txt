@@ -102,7 +102,7 @@ CREATE TABLE evaluation_templates (
 -- Evaluations Table: Stores submitted evaluation responses
 CREATE TABLE evaluations (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    course_code VARCHAR(20) NOT NULL,
+    course_code VARCHAR(20) DEFAULT NULL, -- Changed from NOT NULL to allow NULL for batch/session-only evaluations
     template_id BIGINT NOT NULL,
     feedback JSON NOT NULL,
     comment TEXT DEFAULT NULL,
@@ -115,7 +115,7 @@ CREATE TABLE evaluations (
 CREATE TABLE evaluation_completion (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     template_id BIGINT NOT NULL,
-    course_code VARCHAR(20) NOT NULL,
+    course_code VARCHAR(20) DEFAULT NULL, -- Changed from NOT NULL to allow NULL for batch/session-only evaluations
     student_id BIGINT NOT NULL,
     is_completed BOOLEAN DEFAULT FALSE NOT NULL,
     completion_date TIMESTAMP NULL,
@@ -163,13 +163,36 @@ CREATE TABLE app_settings (
     FOREIGN KEY (admin_id) REFERENCES admins(admin_id) ON DELETE CASCADE
 );
 
+-- Admin_Calendar_Events Table: Stores administrative calendar events
+CREATE TABLE admin_calendar_events (
+    event_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    event_date DATE NOT NULL,
+    admin_id BIGINT DEFAULT NULL, -- Admin who created/is responsible for the event (optional)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES admins(admin_id) ON DELETE SET NULL
+);
+
+-- faculty_requests Table: Stores student requests for faculty for upcoming courses
+-- Modified: Removed foreign key constraint on course_code and changed to course_name
+CREATE TABLE faculty_requests (
+    request_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    student_id BIGINT NOT NULL,
+    course_name VARCHAR(100) NOT NULL, -- Changed from course_code to course_name
+    requested_faculty_name VARCHAR(100) DEFAULT NULL,
+    details TEXT,
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending' NOT NULL,
+    admin_comment TEXT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
+    -- Removed FOREIGN KEY (course_code)
+);
 
 
-
-
-
-
-populate:
+-- populate:
 
 USE CourseEvaluationSystem;
 
@@ -354,16 +377,24 @@ INSERT INTO admin_calendar_events (title, description, event_date, admin_id) VAL
 
 
 -- faculty_requests Table: Stores student requests for faculty for upcoming courses
+-- Modified: Removed foreign key constraint on course_code and changed to course_name
 CREATE TABLE faculty_requests (
     request_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     student_id BIGINT NOT NULL,
-    course_code VARCHAR(20) NOT NULL,
-    requested_faculty_name VARCHAR(100) DEFAULT NULL, -- Student might request a faculty by name if ID is unknown
+    course_name VARCHAR(100) NOT NULL, -- Changed from course_code to course_name
+    requested_faculty_name VARCHAR(100) DEFAULT NULL,
     details TEXT,
     status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending' NOT NULL,
     admin_comment TEXT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE,
-    FOREIGN KEY (course_code) REFERENCES courses(course_code) ON DELETE CASCADE
+    FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
+    -- Removed FOREIGN KEY (course_code)
 );
+
+-- Insert into faculty_requests table: Sample data with course_name
+INSERT INTO faculty_requests (student_id, course_name, requested_faculty_name, details, status)
+VALUES
+    (2254901009, 'Software & Requirement Engineering', 'Sazzadul Islam', 'I would like to request Sazzadul Islam for Software & Requirement Engineering due to his expertise.', 'pending'),
+    (2254903001, 'Data Structures', NULL, 'Requesting a highly experienced faculty for Data Structures course.', 'pending'),
+    (2254904001, 'Principles of Management', 'Dr. Amina Rahman', 'Dr. Rahman is excellent in this subject, her teaching style is very effective.', 'approved');
