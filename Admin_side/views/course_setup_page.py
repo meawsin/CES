@@ -65,10 +65,10 @@ class CourseSetupPage(tk.Frame):
         button_frame = ttk.Frame(self.manage_courses_frame)
         button_frame.pack(pady=5, fill="x")
         
-        ttk.Button(button_frame, text="➕ Add Course", command=self.open_add_course_form, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="✏️ Edit Course", command=self.open_edit_course_form, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="🗑️ Delete Course", command=self.delete_selected_course, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="🔄 Refresh List", command=self.load_courses, style="General.TButton").pack(side="right", padx=5)
+        ttk.Button(button_frame, text="Add Course", command=self.open_add_course_form, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Edit Course", command=self.open_edit_course_form, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Delete Course", command=self.delete_selected_course, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Refresh List", command=self.load_courses, style="General.TButton").pack(side="right", padx=5)
 
         # Treeview
         self.course_tree = ttk.Treeview(self.manage_courses_frame, columns=("Code", "Name", "Status"), show="headings")
@@ -301,7 +301,7 @@ class CourseSetupPage(tk.Frame):
         self.overview_department_combo.grid(row=row_idx, column=3, padx=5, pady=2, sticky="ew")
         row_idx += 1
 
-        ttk.Button(filter_frame, text="📊 Apply Filters", command=self.load_assignments_overview, style="General.TButton").grid(row=row_idx, column=0, columnspan=4, pady=10)
+        ttk.Button(filter_frame, text="Apply Filters", command=self.load_assignments_overview, style="General.TButton").grid(row=row_idx, column=0, columnspan=4, pady=10)
 
 
         # Treeview for displaying combined assignments

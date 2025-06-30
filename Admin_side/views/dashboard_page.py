@@ -59,6 +59,29 @@ class DashboardPage(tk.Frame):
         self.update_dashboard_data()
         self.update_clock()
 
+    def update_theme(self, theme):
+        """
+        Updates the dashboard theme when theme is changed.
+        :param theme: 'light' or 'dark'
+        """
+        if theme == "dark":
+            # Dark theme colors
+            self.configure(bg="#2C3E50")
+            self.content_frame.configure(bg="#2C3E50")
+            self.sidebar_frame.configure(bg="#34495E")
+            
+            # Update user info label for dark theme
+            self.user_info_label.configure(background="#34495E", foreground="#ECF0F1")
+            
+        else:
+            # Light theme colors
+            self.configure(bg="#ECF0F1")
+            self.content_frame.configure(bg="#ECF0F1")
+            self.sidebar_frame.configure(bg="#34495E")
+            
+            # Update user info label for light theme
+            self.user_info_label.configure(background="#34495E", foreground="white")
+
 
     def create_sidebar(self):
         """

@@ -36,10 +36,10 @@ class HRStudentsPage(tk.Frame):
         button_frame.pack(pady=5, fill="x")
 
         # Use global "General.TButton" style and add icons
-        ttk.Button(button_frame, text="Add Student ➕", command=self.open_add_student_form, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Edit Student ✏️", command=self.open_edit_student_form, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Delete Student 🗑️", command=self.delete_selected_student, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Refresh List 🔄", command=self.load_students, style="General.TButton").pack(side="right", padx=5)
+        ttk.Button(button_frame, text="Add Student", command=self.open_add_student_form, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Edit Student", command=self.open_edit_student_form, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Delete Student", command=self.delete_selected_student, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Refresh List", command=self.load_students, style="General.TButton").pack(side="right", padx=5)
 
 
         # Students Treeview (Table) - Will pick up global Treeview styles

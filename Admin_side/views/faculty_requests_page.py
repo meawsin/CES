@@ -40,7 +40,7 @@ class FacultyRequestsPage(tk.Frame):
         self.status_filter_combo.pack(side="left", padx=5)
         self.status_filter_combo.bind("<<ComboboxSelected>>", self.load_faculty_requests)
 
-        ttk.Button(filter_frame, text="🔄 Refresh", command=self.load_faculty_requests, style="General.TButton").pack(side="right", padx=5)
+        ttk.Button(filter_frame, text="Refresh", command=self.load_faculty_requests, style="General.TButton").pack(side="right", padx=5)
 
 
         # Requests Treeview (Table)
@@ -74,10 +74,10 @@ class FacultyRequestsPage(tk.Frame):
         action_frame = ttk.Frame(self, padding="10")
         action_frame.pack(pady=10, fill="x")
 
-        ttk.Button(action_frame, text="👁️ View Details / Update", command=self.view_update_request, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(action_frame, text="✅ Mark Approved", command=lambda: self.update_selected_request_status('approved'), style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(action_frame, text="❌ Mark Rejected", command=lambda: self.update_selected_request_status('rejected'), style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(action_frame, text="⏳ Mark Pending", command=lambda: self.update_selected_request_status('pending'), style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(action_frame, text="View Details / Update", command=self.view_update_request, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(action_frame, text="Mark Approved", command=lambda: self.update_selected_request_status('approved'), style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(action_frame, text="Mark Rejected", command=lambda: self.update_selected_request_status('rejected'), style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(action_frame, text="Mark Pending", command=lambda: self.update_selected_request_status('pending'), style="General.TButton").pack(side="left", padx=5)
 
 
     def load_faculty_requests(self, event=None):
@@ -93,7 +93,10 @@ class FacultyRequestsPage(tk.Frame):
         for req in requests:
             short_details = (req['details'][:70] + "...") if len(req['details']) > 70 else req['details']
             
-            course_display = f"{req['course_code']} - {req['course_name']}" if req['course_code'] and req['course_name'] else "N/A"
+            # Safely get course_code and course_name, fallback to 'N/A' if missing
+            course_code = req.get('course_code', 'N/A')
+            course_name = req.get('course_name', 'N/A')
+            course_display = f"{course_code} - {course_name}" if course_code != 'N/A' and course_name != 'N/A' else "N/A"
 
             self.tree.insert("", "end", iid=req['request_id'], values=(
                 req['request_id'],
@@ -178,7 +181,7 @@ class FacultyRequestsPage(tk.Frame):
         self.new_status_combo_dialog.grid(row=row_idx, column=1, sticky="ew", pady=5, padx=5)
         row_idx += 1
 
-        ttk.Button(details_frame, text="✅ Update Status & Add Comment", command=lambda: self.update_request_status_from_dialog(
+        ttk.Button(details_frame, text="Update Status & Add Comment", command=lambda: self.update_request_status_from_dialog(
             request_id, admin_comments_text_display, details_window
         ), style="FormSave.TButton").grid(row=row_idx, column=0, columnspan=2, pady=10)
         row_idx += 1

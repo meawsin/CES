@@ -1,6 +1,6 @@
 # Admin_side/main.py
 
-import tkinter as tk
+import customtkinter as ctk
 from tkinter import messagebox, ttk # Import ttk for themed widgets
 from views.login_page import LoginPage
 from views.dashboard_page import DashboardPage
@@ -8,9 +8,10 @@ from database.db_manager import DBManager # For database connection management
 from config import APP_NAME # Application name from config
 from datetime import datetime, timedelta # For auto-logout functionality
 
-class CourseEvaluationApp(tk.Tk):
+class CourseEvaluationApp(ctk.CTk):
     """
     Main application class for the Course Evaluation System (Admin Side).
+    Uses customtkinter for modern UI and dark/light mode support.
     Manages pages, user sessions, database connection, and auto-logout.
     """
     def __init__(self):
@@ -22,12 +23,12 @@ class CourseEvaluationApp(tk.Tk):
 
         self.root_window = self # Reference to the root Tkinter window
 
-        # Initialize ttk Style object globally for consistent theming
-        self.style = ttk.Style(self)
-        self._configure_styles() # Call method to set up custom styles
+        # Set default appearance mode
+        ctk.set_appearance_mode("Light")
+        ctk.set_default_color_theme("blue")
 
         # Main container frame where all pages will be displayed
-        self.container = tk.Frame(self)
+        self.container = ctk.CTkFrame(self)
         self.container.pack(side="top", fill="both", expand=True)
         self.container.grid_rowconfigure(0, weight=1)
         self.container.grid_columnconfigure(0, weight=1)
@@ -51,6 +52,9 @@ class CourseEvaluationApp(tk.Tk):
         self._start_activity_monitoring() # Start listening for user activity
         self._schedule_auto_logout_check() # Schedule periodic checks for inactivity
 
+        # Initialize theme
+        self.current_theme = "light"  # Default theme
+        
         # Bind the window closing protocol to our custom handler
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -306,8 +310,20 @@ class CourseEvaluationApp(tk.Tk):
             if settings:
                 self.auto_logout_interval_minutes = settings.auto_logout_minutes
                 print(f"Auto-logout interval updated to {self.auto_logout_interval_minutes} minutes.")
-            else:
-                print("Could not retrieve updated settings for auto-logout.")
+
+    def apply_theme(self, theme):
+        """
+        Applies the selected theme to the application using customtkinter.
+        :param theme: 'light' or 'dark'
+        """
+        if theme == "dark":
+            ctk.set_appearance_mode("Dark")
+        else:
+            ctk.set_appearance_mode("Light")
+        # No need to manually update widget backgrounds; customtkinter handles it.
+        for page in self.pages.values():
+            if hasattr(page, 'update_theme'):
+                page.update_theme(theme)
 
 if __name__ == "__main__":
     # IMPORTANT: To run this application and avoid ModuleNotFoundError,

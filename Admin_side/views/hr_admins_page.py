@@ -32,10 +32,10 @@ class HRAdminsPage(tk.Frame):
         button_frame.pack(pady=5, fill="x")
 
         # Use global "General.TButton" style and add icons
-        ttk.Button(button_frame, text="Add Admin ➕", command=self.open_add_admin_form, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Add Admin", command=self.open_add_admin_form, style="General.TButton").pack(side="left", padx=5)
         # Edit Admin Button is removed as per previous request
-        ttk.Button(button_frame, text="Delete Admin 🗑️", command=self.delete_selected_admin, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Refresh List 🔄", command=self.load_admins, style="General.TButton").pack(side="right", padx=5)
+        ttk.Button(button_frame, text="Delete Admin", command=self.delete_selected_admin, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Refresh List", command=self.load_admins, style="General.TButton").pack(side="right", padx=5)
 
         self.tree = ttk.Treeview(self, columns=(
             "ID", "Name", "Email", "Contact No", "Create Templates", "View Reports",

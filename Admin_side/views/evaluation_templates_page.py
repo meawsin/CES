@@ -56,12 +56,12 @@ class EvaluationTemplatesPage(tk.Frame):
         button_frame = ttk.Frame(self.templates_frame, padding="10")
         button_frame.pack(pady=5, fill="x")
         
-        ttk.Button(button_frame, text="Create New ➕", command=self.open_create_template_form, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Edit ✏️", command=self.open_edit_template_form, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Delete 🗑️", command=self.delete_selected_template, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Assign Template ➡️", command=self.open_assign_template_form, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="View Details 👁️", command=self.view_template_details, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Refresh 🔄", command=self.load_templates, style="General.TButton").pack(side="right", padx=5)
+        ttk.Button(button_frame, text="Create New", command=self.open_create_template_form, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Edit", command=self.open_edit_template_form, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Delete", command=self.delete_selected_template, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Assign Template", command=self.open_assign_template_form, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="View Details", command=self.view_template_details, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Refresh", command=self.load_templates, style="General.TButton").pack(side="right", padx=5)
 
         self.template_tree = ttk.Treeview(self.templates_frame, columns=(
             "ID", "Title", "Assigned Course", "Assigned Batch", "Assigned Session", "Last Date", "Created By Admin ID"
@@ -300,7 +300,7 @@ class EvaluationTemplatesPage(tk.Frame):
         title_label = ttk.Label(self.ongoing_frame, text="Currently Active Evaluations", font=("Arial", 16, "bold"), background="#ECF0F1", foreground="#34495E")
         title_label.pack(pady=10)
 
-        refresh_button = ttk.Button(self.ongoing_frame, text="Refresh Ongoing 🔄", command=self.load_ongoing_evaluations, style="General.TButton")
+        refresh_button = ttk.Button(self.ongoing_frame, text="Refresh Ongoing", command=self.load_ongoing_evaluations, style="General.TButton")
         refresh_button.pack(pady=5, anchor="e", padx=5)
 
         self.ongoing_tree = ttk.Treeview(self.ongoing_frame, columns=(
@@ -357,7 +357,7 @@ class EvaluationTemplatesPage(tk.Frame):
         title_label = ttk.Label(self.past_frame, text="Completed Evaluations (Past Deadlines)", font=("Arial", 16, "bold"), background="#ECF0F1", foreground="#34495E")
         title_label.pack(pady=10)
 
-        refresh_button = ttk.Button(self.past_frame, text="Refresh Past 🔄", command=self.load_past_evaluations, style="General.TButton")
+        refresh_button = ttk.Button(self.past_frame, text="Refresh Past", command=self.load_past_evaluations, style="General.TButton")
         refresh_button.pack(pady=5, anchor="e", padx=5)
 
         self.past_tree = ttk.Treeview(self.past_frame, columns=(

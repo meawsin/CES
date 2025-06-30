@@ -32,10 +32,10 @@ class HRFacultyPage(tk.Frame):
         button_frame.pack(pady=5, fill="x")
 
         # Use global "General.TButton" style and add icons
-        ttk.Button(button_frame, text="Add Faculty ➕", command=self.open_add_faculty_form, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Add Faculty", command=self.open_add_faculty_form, style="General.TButton").pack(side="left", padx=5)
         # Edit Faculty Button is removed as per previous request
-        ttk.Button(button_frame, text="Delete Faculty 🗑️", command=self.delete_selected_faculty, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Refresh List 🔄", command=self.load_faculty, style="General.TButton").pack(side="right", padx=5)
+        ttk.Button(button_frame, text="Delete Faculty", command=self.delete_selected_faculty, style="General.TButton").pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Refresh List", command=self.load_faculty, style="General.TButton").pack(side="right", padx=5)
 
         self.tree = ttk.Treeview(self, columns=(
             "ID", "Name", "Email", "Contact No", "DOB", "Gender", "Joining Date"

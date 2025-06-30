@@ -100,9 +100,9 @@ class ReportsPage(tk.Frame):
         export_frame = ttk.Frame(self, padding="10")
         export_frame.pack(pady=10, fill="x")
         ttk.Label(export_frame, text="Export:").pack(side="left", padx=5)
-        ttk.Button(export_frame, text="Export to CSV 📄", command=lambda: self.export_report("csv")).pack(side="left", padx=5)
-        ttk.Button(export_frame, text="Export to Excel 📊", command=lambda: self.export_report("xlsx")).pack(side="left", padx=5)
-        ttk.Button(export_frame, text="Export to PDF 📜", command=lambda: self.export_report("pdf")).pack(side="left", padx=5) # PDF support noted as partial
+        ttk.Button(export_frame, text="Export to CSV", command=lambda: self.export_report("csv")).pack(side="left", padx=5)
+        ttk.Button(export_frame, text="Export to Excel", command=lambda: self.export_report("xlsx")).pack(side="left", padx=5)
+        ttk.Button(export_frame, text="Export to PDF", command=lambda: self.export_report("pdf")).pack(side="left", padx=5) # PDF support noted as partial
 
     def load_filter_options(self):
         # Load courses

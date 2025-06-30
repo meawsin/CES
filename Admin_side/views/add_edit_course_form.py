@@ -95,15 +95,10 @@ class AddEditCourseForm(tk.Toplevel):
 
             course_code_entry = self.entries['course_code']
             
-            # Temporarily set to normal, insert, then re-disable after a short delay
-            # This is the key change for persistent display in disabled entry.
-            course_code_entry.config(state='normal') # Enable to insert
+            # Insert the course code and make it read-only (not disabled) for better visibility
             course_code_entry.delete(0, tk.END)
             course_code_entry.insert(0, self.course_to_edit.course_code)
-            
-            # Use after_idle to re-disable *after* Tkinter has processed the insert
-            self.after_idle(lambda: course_code_entry.config(state='disabled'))
-
+            course_code_entry.config(state='readonly')  # Read-only instead of disabled for better visibility
 
             self.entries['name'].delete(0, tk.END)
             self.entries['name'].insert(0, self.course_to_edit.name)

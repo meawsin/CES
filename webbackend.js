@@ -363,14 +363,14 @@ async function loadPendingEvaluations() {
             const errorData = await response.json();
             showCustomMessageBox('Error', `Failed to load evaluations: ${errorData.message || response.statusText}`);
             if (noPendingEvaluations) {
-                noPendingEvaluations.textContent = `Failed to load evaluations: ${errorData.message || response.statusText}`;
+            noPendingEvaluations.textContent = `Failed to load evaluations: ${errorData.message || response.statusText}`;
                 noPendingEvaluations.classList.remove("hidden");
             }
             console.error("Failed to load evaluations:", errorData);
         }
     } catch (error) {
         if (loadingPending) loadingPending.classList.add("hidden");
-        console.error("Network error loading evaluations:", error);
+            console.error("Network error loading evaluations:", error);
     }
 }
 
@@ -423,12 +423,12 @@ async function loadMyProfile() {
 
                 if (input) {
                     input.onblur = () => disableEdit(fieldName);
-                    input.onkeydown = (e) => {
-                        if (e.key === "Enter") {
+                input.onkeydown = (e) => {
+                    if (e.key === "Enter") {
                             e.preventDefault();
-                            disableEdit(fieldName);
-                        }
-                    };
+                        disableEdit(fieldName);
+                    }
+                };
                 }
             }
         } else {
@@ -436,14 +436,14 @@ async function loadMyProfile() {
             const errorData = await response.json();
             showCustomMessageBox('Error', `Failed to load profile: ${errorData.message || response.statusText}`);
             if (profileError) {
-                profileError.textContent = `Failed to load profile: ${errorData.message || response.statusText}`;
+            profileError.textContent = `Failed to load profile: ${errorData.message || response.statusText}`;
                 profileError.classList.remove("hidden");
             }
             console.error("Failed to load profile:", errorData);
         }
     } catch (error) {
         if (profileLoading) profileLoading.classList.add("hidden");
-        console.error("Network error loading profile:", error);
+            console.error("Network error loading profile:", error);
     }
 }
 
@@ -468,7 +468,7 @@ async function disableEdit(fieldName) {
 
     if (input) input.classList.add("hidden");
     if (span) {
-        span.classList.remove("hidden");
+    span.classList.remove("hidden");
         span.textContent = newValue || "N/A";
     }
 
@@ -521,15 +521,15 @@ function checkAndHideSaveButton() {
 }
 
 if (saveProfileButton) {
-    saveProfileButton.addEventListener("click", async () => {
-        for (const fieldName in editableProfileFields) {
-            const { input } = editableProfileFields[fieldName];
+saveProfileButton.addEventListener("click", async () => {
+    for (const fieldName in editableProfileFields) {
+        const { input } = editableProfileFields[fieldName];
             if (input && !input.classList.contains("hidden")) {
                 input.blur();
             }
         }
     });
-}
+    }
 
 // --- Completed Evaluations Logic ---
 async function loadCompletedEvaluations() {
@@ -556,14 +556,14 @@ async function loadCompletedEvaluations() {
             const errorData = await response.json();
             showCustomMessageBox('Error', `Failed to load completed evaluations: ${errorData.message || response.statusText}`);
             if (noCompletedEvaluations) {
-                noCompletedEvaluations.textContent = `Failed to load completed evaluations: ${errorData.message || response.statusText}`;
-                noCompletedEvaluations.classList.remove("hidden");
+            noCompletedEvaluations.textContent = `Failed to load completed evaluations: ${errorData.message || response.statusText}`;
+            noCompletedEvaluations.classList.remove("hidden");
             }
             console.error("Failed to load completed evaluations:", errorData);
         }
     } catch (error) {
         if (loadingCompleted) loadingCompleted.classList.add("hidden");
-        console.error("Network error loading completed evaluations:", error);
+            console.error("Network error loading completed evaluations:", error);
     }
 }
 
@@ -788,37 +788,37 @@ async function loadComplaintList() {
 }
 
 if (complaintForm) {
-    complaintForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
+complaintForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
         if (complaintMessageBox) complaintMessageBox.classList.add("hidden");
         if (complaintSuccess) complaintSuccess.classList.add("hidden");
 
-        const complaintData = {
+    const complaintData = {
             course_code: complaintCourse ? complaintCourse.value.trim() : null,
             issue_type: complaintIssueType ? complaintIssueType.value : '',
             details: complaintDetails ? complaintDetails.value.trim() : '',
         };
 
-        if (!complaintData.issue_type) {
+    if (!complaintData.issue_type) {
             if (complaintMessageText) complaintMessageText.textContent = "Please select an issue type.";
             if (complaintMessageBox) complaintMessageBox.classList.remove("hidden");
-            return;
-        }
-        if (!complaintData.details) {
+        return;
+    }
+    if (!complaintData.details) {
             if (complaintMessageText) complaintMessageText.textContent = "Please provide details for your complaint.";
             if (complaintMessageBox) complaintMessageBox.classList.remove("hidden");
-            return;
-        }
+        return;
+    }
 
-        try {
-            const response = await authenticatedFetch(`${API_BASE_URL}/student/complaints/submit`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(complaintData),
-            });
+    try {
+        const response = await authenticatedFetch(`${API_BASE_URL}/student/complaints/submit`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(complaintData),
+        });
 
-            const data = await response.json();
-            if (response.ok) {
+        const data = await response.json();
+        if (response.ok) {
                 if (complaintSuccess) complaintSuccess.classList.remove("hidden");
                 if (complaintForm) complaintForm.reset();
                 loadComplaintList();
@@ -826,12 +826,12 @@ if (complaintForm) {
                 if (currentActiveTab === 'complaints') {
                     setTimeout(() => refreshCurrentTabAfterAction(), 1000); // Small delay to show success message
                 }
-            } else {
+        } else {
                 if (complaintMessageText) complaintMessageText.textContent = data.message || "Failed to submit complaint.";
                 if (complaintMessageBox) complaintMessageBox.classList.remove("hidden");
-                console.error("Complaint submission error:", data);
-            }
-        } catch (error) {
+            console.error("Complaint submission error:", data);
+        }
+    } catch (error) {
             console.error("Network error complaint submission:", error);
         }
     });
