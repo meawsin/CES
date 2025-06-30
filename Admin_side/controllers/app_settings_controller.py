@@ -5,7 +5,7 @@ from models.app_settings_model import AppSettings
 class AppSettingsController:
     """
     Controller for managing application settings in the database.
-    Now specifically handles auto-logout settings.
+    Now handles auto-logout settings and theme preferences.
     """
     def __init__(self):
         self.db = DBManager()
@@ -37,10 +37,11 @@ class AppSettingsController:
             query = """
             UPDATE app_settings SET
                 auto_logout_minutes = %s,
+                theme = %s,
                 updated_at = CURRENT_TIMESTAMP
             WHERE admin_id = %s;
             """
-            params = (settings.auto_logout_minutes, settings.admin_id)
+            params = (settings.auto_logout_minutes, settings.theme, settings.admin_id)
             success = self.db.execute_query(query, params)
             if success:
                 return True, "Settings updated successfully."
@@ -49,10 +50,10 @@ class AppSettingsController:
         else:
             # If no settings exist, insert new ones
             query = """
-            INSERT INTO app_settings (admin_id, auto_logout_minutes)
-            VALUES (%s, %s);
+            INSERT INTO app_settings (admin_id, auto_logout_minutes, theme)
+            VALUES (%s, %s, %s);
             """
-            params = (settings.admin_id, settings.auto_logout_minutes)
+            params = (settings.admin_id, settings.auto_logout_minutes, settings.theme)
             success = self.db.execute_query(query, params)
             if success:
                 return True, "Settings saved successfully."
