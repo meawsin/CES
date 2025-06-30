@@ -1,11 +1,11 @@
-# views/dashboard_page.py (Updated for Dashboard Enhancements)
-
+# Admin_side/views/dashboard_page.py (Updated for Dashboard Enhancements and Requests)
 import tkinter as tk
 from tkinter import ttk, messagebox
 from controllers.auth_controller import AuthController
 from controllers.evaluation_template_controller import EvaluationTemplateController # For running eval count
 from controllers.student_controller import StudentController                 # For total batches count
 from controllers.admin_calendar_event_controller import AdminCalendarEventController # For calendar events
+from controllers.faculty_request_controller import FacultyRequestController # NEW: For faculty requests count
 from views.hr_students_page import HRStudentsPage # HR Management tab
 from views.hr_faculty_page import HRFacultyPage   # HR Management tab
 from views.hr_admins_page import HRAdminsPage     # HR Management tab
@@ -13,7 +13,7 @@ from views.course_setup_page import CourseSetupPage # Course Management page
 from views.evaluation_templates_page import EvaluationTemplatesPage # Evaluation Templates page
 from views.reports_page import ReportsPage       # Reports page
 from views.complaints_page import ComplaintsPage # Complaints page
-# from views.comparison_page import ComparisonPage # Removed as per request
+from views.faculty_requests_page import FacultyRequestsPage # NEW: Faculty Requests page
 from views.app_settings_page import AppSettingsPage # App Settings page
 from datetime import datetime, date, timedelta # For clock and calendar
 import calendar # For calendar grid logic
@@ -31,9 +31,10 @@ class DashboardPage(tk.Frame):
         self.evaluation_template_controller = EvaluationTemplateController() # For running evaluations count and eval deadlines
         self.student_controller = StudentController()                 # For total batches count
         self.admin_calendar_event_controller = AdminCalendarEventController() # For admin-specific calendar events
+        self.faculty_request_controller = FacultyRequestController() # NEW: Initialize faculty request controller
         self.admin_user = admin_user # The logged-in admin user object
 
-        self.configure(bg="#ECF0F1") # Set background color for the dashboard
+        self.configure(bg="#ecf0f1") # Set background color for the dashboard
 
         # Configure grid layout for sidebar and content area
         self.grid_rowconfigure(0, weight=1) # Main row (for sidebar and content) expands vertically
@@ -63,25 +64,26 @@ class DashboardPage(tk.Frame):
         """
         Creates the navigation sidebar on the left side of the dashboard.
         """
-        self.sidebar_frame = tk.Frame(self, bg="#34495E", width=250)
+        self.sidebar_frame = tk.Frame(self, bg="#34495e", width=250)
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
         self.sidebar_frame.grid_propagate(False) # Prevent frame from shrinking to fit content
 
         # Label to display current user's name
         self.user_info_label = ttk.Label(self.sidebar_frame, text="",
-                                         font=("Arial", 14, "bold"), foreground="white", background="#34495E",
+                                         font=("Arial", 14, "bold"), foreground="white", background="#34495e",
                                          anchor="center")
         self.user_info_label.pack(pady=20, fill="x")
 
         # Configuration for sidebar navigation buttons
         nav_buttons_config = [
-            ("Home 🏠", self.show_home_content),
-            ("HR Management 👥", self.show_hr_management_wrapper),
-            ("Course Setup 📚", self.show_course_setup),
-            ("Evaluation 📝", self.show_evaluation_templates),
-            ("Reports 📊", self.show_reports),
-            ("Complaints 💬", self.show_complaints),
-            ("Application settings ⚙️", self.show_app_settings),
+            ("🏠 Home", self.show_home_content),
+            ("👥 HR Management", self.show_hr_management_wrapper),
+            ("📚 Course Setup", self.show_course_setup),
+            ("📋 Evaluation", self.show_evaluation_templates),
+            ("📊 Reports", self.show_reports),
+            ("💬 Complaints", self.show_complaints),
+            ("🧑‍🏫 Faculty Requests", self.show_faculty_requests), # NEW: Faculty Requests Button
+            ("⚙️ Application settings", self.show_app_settings),
         ]
 
         self.nav_buttons = [] # List to keep track of navigation buttons
@@ -91,7 +93,7 @@ class DashboardPage(tk.Frame):
             self.nav_buttons.append(btn)
 
         # Logout button at the bottom of the sidebar
-        logout_button = ttk.Button(self.sidebar_frame, text="Logout 🚪", command=self.handle_logout, style="Sidebar.Logout.TButton")
+        logout_button = ttk.Button(self.sidebar_frame, text="🚪 Logout", command=self.handle_logout, style="Sidebar.Logout.TButton")
         logout_button.pack(fill="x", pady=20, padx=10, side="bottom")
 
         # Apply specific styles for sidebar buttons (defined in main.py)
@@ -103,7 +105,7 @@ class DashboardPage(tk.Frame):
         """
         Creates the main content frame where different sub-pages will be displayed.
         """
-        self.content_frame = tk.Frame(self, bg="#ECF0F1")
+        self.content_frame = tk.Frame(self, bg="#ecf0f1")
         self.content_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20) # Place in grid, allow expanding
         self.content_frame.grid_rowconfigure(0, weight=1) # Allow row 0 to expand
         self.content_frame.grid_columnconfigure(0, weight=1) # Allow column 0 to expand
@@ -130,6 +132,7 @@ class DashboardPage(tk.Frame):
         self.sub_pages["EvaluationTemplatesPage"] = EvaluationTemplatesPage(parent=self.content_frame, controller=self.parent_controller)
         self.sub_pages["ReportsPage"] = ReportsPage(parent=self.content_frame, controller=self.parent_controller)
         self.sub_pages["ComplaintsPage"] = ComplaintsPage(parent=self.content_frame, controller=self.parent_controller)
+        self.sub_pages["FacultyRequestsPage"] = FacultyRequestsPage(parent=self.content_frame, controller=self.parent_controller) # NEW: Requests Page
         self.sub_pages["AppSettingsPage"] = AppSettingsPage(parent=self.content_frame, controller=self.parent_controller)
 
 
@@ -187,7 +190,7 @@ class DashboardPage(tk.Frame):
                 btn.config(state="normal" if self.admin_user.can_create_templates else "disabled")
             elif "Reports" in text:
                 btn.config(state="normal" if self.admin_user.can_view_reports else "disabled")
-            elif "Complaints" in text:
+            elif "Complaints" in text or "Faculty Requests" in text: # NEW: Requests page permission logic
                 btn.config(state="normal" if self.admin_user.can_manage_complaints else "disabled")
             elif "Application settings" in text or "Home" in text: # These pages are generally accessible
                 btn.config(state="normal")
@@ -232,10 +235,10 @@ class DashboardPage(tk.Frame):
         title_frame.columnconfigure(0, weight=1) # For clock label to push right
 
         home_label = ttk.Label(title_frame, text="Admin Dashboard",
-                               font=("Arial", 20, "bold"), foreground="#34495E", background="#ECF0F1")
+                               font=("Arial", 20, "bold"), foreground="#34495e", background="#ecf0f1")
         home_label.pack(side="left", pady=10, padx=10)
 
-        self.clock_label = ttk.Label(title_frame, text="", font=("Arial", 14), background="#ECF0F1", foreground="#34495E")
+        self.clock_label = ttk.Label(title_frame, text="", font=("Arial", 14), background="#ecf0f1", foreground="#34495e")
         self.clock_label.pack(side="right", pady=10, padx=10)
 
 
@@ -254,6 +257,11 @@ class DashboardPage(tk.Frame):
         self.total_batches_card = self._create_info_card(self.info_cards_frame, "Total Batches", "0")
         self.total_batches_card.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
 
+        # Pending Faculty Requests Card
+        self.pending_requests_card = self._create_info_card(self.info_cards_frame, "Pending Requests", "0") # NEW: Pending Requests Card
+        self.pending_requests_card.grid(row=0, column=2, padx=10, pady=10, sticky="nsew")
+
+
         # Calendar Section
         calendar_frame = ttk.LabelFrame(home_frame, text="Calendar & Events", padding="15", style="Calendar.TLabelframe")
         calendar_frame.grid(row=2, column=0, columnspan=3, padx=10, pady=20, sticky="nsew")
@@ -265,11 +273,11 @@ class DashboardPage(tk.Frame):
         calendar_nav_frame.pack(pady=5, fill="x")
         calendar_nav_frame.columnconfigure(0, weight=1) # Center month label
 
-        ttk.Button(calendar_nav_frame, text="◀️ Prev", command=self.prev_month).pack(side="left", padx=5)
-        self.month_year_label = ttk.Label(calendar_nav_frame, text="", font=("Arial", 14, "bold"), background="#ECF0F1", foreground="#34495E")
+        ttk.Button(calendar_nav_frame, text="< Prev", command=self.prev_month).pack(side="left", padx=5)
+        self.month_year_label = ttk.Label(calendar_nav_frame, text="", font=("Arial", 14, "bold"), background="#ecf0f1", foreground="#34495e")
         self.month_year_label.pack(side="left", expand=True, fill="x", anchor="center")
-        ttk.Button(calendar_nav_frame, text="Next ▶️", command=self.next_month).pack(side="right", padx=5)
-        ttk.Button(calendar_nav_frame, text="Add Meeting ➕", command=self.open_add_event_form, style="General.TButton").pack(side="right", padx=5) # NEW: Add Meeting button
+        ttk.Button(calendar_nav_frame, text="Next >", command=self.next_month).pack(side="right", padx=5)
+        ttk.Button(calendar_nav_frame, text="➕ Add Meeting", command=self.open_add_event_form, style="General.TButton").pack(side="right", padx=5)
 
 
         # Calendar Grid itself
@@ -302,7 +310,7 @@ class DashboardPage(tk.Frame):
         card_frame = ttk.LabelFrame(parent, text=title, padding="15", style="Card.TLabelframe")
         card_frame.columnconfigure(0, weight=1) # Center content horizontally
 
-        value_label = ttk.Label(card_frame, text=value, font=("Arial", 28, "bold"), foreground="#2980DB", background="#ECF0F1")
+        value_label = ttk.Label(card_frame, text=value, font=("Arial", 28, "bold"), foreground="#2980b9", background="#ecf0f1")
         value_label.grid(row=0, column=0, pady=10)
 
         card_frame.value_label = value_label # Store reference to the value label for updates
@@ -325,6 +333,10 @@ class DashboardPage(tk.Frame):
         # Update Total Batches Count
         total_batches_count = self.student_controller.get_total_batches_count()
         self.total_batches_card.value_label.config(text=str(total_batches_count))
+
+        # NEW: Update Pending Faculty Requests Count
+        pending_requests_count = self.faculty_request_controller.get_all_faculty_requests(status='pending')
+        self.pending_requests_card.value_label.config(text=str(len(pending_requests_count)))
 
         # Redraw calendar to ensure events are up-to-date
         self.draw_calendar()
@@ -362,7 +374,7 @@ class DashboardPage(tk.Frame):
         day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
         for i, day_name in enumerate(day_names):
             ttk.Label(self.calendar_grid_frame, text=day_name, font=("Arial", 10, "bold"),
-                      background="#BDC3C7", foreground="#2C3E50", anchor="center").grid(row=0, column=i, sticky="nsew", padx=1, pady=1)
+                      background="#bdc3c7", foreground="#2c3e50", anchor="center").grid(row=0, column=i, sticky="nsew", padx=1, pady=1)
             self.calendar_grid_frame.grid_columnconfigure(i, weight=1) # Make columns expand evenly
 
         # Get all relevant events for the current month (eval deadlines and admin events)
@@ -393,7 +405,7 @@ class DashboardPage(tk.Frame):
                 if day_num != 0: # If it's a valid day in the month (0 means padding day)
                     # Display day number
                     day_label = ttk.Label(day_frame, text=str(day_num), font=("Arial", 10, "bold"),
-                                          background="#ECF0F1", foreground="#34495E", anchor="ne", padding=(0,0,2,2)) # Pad to push to top-right
+                                          background="#ecf0f1", foreground="#34495e", anchor="ne", padding=(0,0,2,2)) # Pad to push to top-right
                     day_label.grid(row=0, column=0, sticky="ne")
 
                     current_day_date = date(self.current_calendar_year, self.current_calendar_month, day_num)
@@ -402,7 +414,7 @@ class DashboardPage(tk.Frame):
 
                     # Add event indicator if events exist for this day
                     if day_num in events_by_date:
-                        event_indicator = ttk.Label(day_frame, text="•", font=("Arial", 16, "bold"), foreground="red", background="#ECF0F1")
+                        event_indicator = ttk.Label(day_frame, text="•", font=("Arial", 16, "bold"), foreground="red", background="#ecf0f1")
                         event_indicator.grid(row=0, column=0, sticky="nw", padx=(2,0), pady=(0,2)) # Place dot top-left
 
                         # Bind click event to show event details for this day
@@ -421,11 +433,11 @@ class DashboardPage(tk.Frame):
         self.event_details_text.config(state="disabled")
 
         # Re-apply styles for calendar frames (just in case)
-        self.style.configure("Calendar.TLabelframe", background="#ECF0F1", foreground="#34495E", font=("Arial", 12, "bold"))
-        self.style.configure("Calendar.TLabelframe.Label", background="#ECF0F1", foreground="#34495E") # Ensure label background matches frame
-        self.style.configure("CalendarDay.TFrame", background="#ECF0F1")
-        self.style.configure("CurrentDay.TFrame", background="#E0F7FA", bordercolor="#2196F3", relief="solid", borderwidth=2)
-        self.style.configure("EmptyDay.TFrame", background="#F8F9FA")
+        self.style.configure("Calendar.TLabelframe", background="#ecf0f1", foreground="#34495e", font=("Arial", 12, "bold"))
+        self.style.configure("Calendar.TLabelframe.Label", background="#ecf0f1", foreground="#34495e") # Ensure label background matches frame
+        self.style.configure("CalendarDay.TFrame", background="#ecf0f1")
+        self.style.configure("CurrentDay.TFrame", background="#e0f7fa", bordercolor="#2196f3", relief="solid", borderwidth=2)
+        self.style.configure("EmptyDay.TFrame", background="#f8f9fa", relief="flat", borderwidth=0)
 
     def _get_events_for_calendar_view(self):
         """
@@ -547,7 +559,7 @@ class DashboardPage(tk.Frame):
             cal.pack(pady=10)
 
             # Button to confirm date selection
-            ttk.Button(cal_win, text="Select Date ✅", command=lambda: on_date_select(cal.get_date())).pack(pady=5)
+            ttk.Button(cal_win, text="Select Date", command=lambda: on_date_select(cal.get_date())).pack(pady=5)
 
             def on_date_select(selected_date_str):
                 # Populate the target entry with the selected date and close the calendar
@@ -613,7 +625,7 @@ class DashboardPage(tk.Frame):
                 messagebox.showerror("Error", "Failed to add event. A database error might have occurred.")
 
         # Save Event Button for the form
-        ttk.Button(form_frame, text="Add Event ✅", command=save_event, style="FormSave.TButton").grid(row=3, column=0, columnspan=3, pady=20)
+        ttk.Button(form_frame, text="➕ Add Event", command=save_event, style="FormSave.TButton").grid(row=3, column=0, columnspan=3, pady=20)
 
         # Center the add event window over the root window
         add_event_window.update_idletasks() # Ensure sizes are calculated
@@ -688,6 +700,16 @@ class DashboardPage(tk.Frame):
             self.show_sub_page(self.sub_pages["ComplaintsPage"])
         else:
             messagebox.showwarning("Permission Denied", "You do not have permission to manage complaints.")
+
+    def show_faculty_requests(self): # NEW: Show Faculty Requests page
+        """
+        Displays the Faculty Requests page if the admin has permission.
+        """
+        # Assuming 'can_manage_complaints' also covers requests for now, adjust as needed
+        if self.admin_user and self.admin_user.can_manage_complaints:
+            self.show_sub_page(self.sub_pages["FacultyRequestsPage"])
+        else:
+            messagebox.showwarning("Permission Denied", "You do not have permission to manage faculty requests.")
 
     def show_app_settings(self):
         """

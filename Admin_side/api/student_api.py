@@ -15,6 +15,7 @@ from database.db_manager import DBManager
 from controllers.auth_controller import AuthController # Potentially unused for student API directly, but part of context
 from controllers.student_controller import StudentController
 from controllers.evaluation_template_controller import EvaluationTemplateController
+from controllers.faculty_request_controller import FacultyRequestController # NEW: Import FacultyRequestController
 from models.evaluation_completion_model import EvaluationCompletion
 from models.evaluation_model import Evaluation
 
@@ -26,6 +27,8 @@ db_manager = DBManager()
 auth_controller = AuthController() # Still keeping this, though it's primarily for admin auth
 student_controller = StudentController()
 evaluation_template_controller = EvaluationTemplateController()
+faculty_request_controller = FacultyRequestController() # NEW: Initialize faculty request controller
+
 
 # Connect to the database on app startup
 if not db_manager.connect():
@@ -387,6 +390,79 @@ def submit_complaint_api():
         return jsonify({"message": message}), 200
     else:
         return jsonify({"message": message}), 500
+
+@app.route('/api/student/complaints/list', methods=['GET'])
+def get_student_complaints_list():
+    """
+    Returns all complaints submitted by the logged-in student.
+    """
+    token = request.headers.get('Authorization')
+    if not token or not token.startswith('Bearer '):
+        return jsonify({"message": "Authentication required."}), 401
+
+    student_id = get_student_id_from_token(token.split(' ')[1])
+    if not student_id:
+        return jsonify({"message": "Invalid session token."}), 401
+
+    complaints = student_controller.get_complaints_for_student(student_id)
+    # Each complaint should have: issue_type, details, course_code, status
+    return jsonify(complaints), 200
+
+# NEW: Endpoint for submitting faculty requests
+@app.route('/api/student/requests/faculty_request', methods=['POST'])
+def submit_faculty_request_api():
+    """
+    Allows a student to submit a request for a new faculty for a course.
+    """
+    token = request.headers.get('Authorization')
+    if not token or not token.startswith('Bearer '):
+        return jsonify({"message": "Authentication required."}), 401
+
+    student_id = get_student_id_from_token(token.split(' ')[1])
+    if not student_id:
+        return jsonify({"message": "Invalid session token."}), 401
+
+    data = request.get_json()
+    course_code = data.get('course_code')
+    requested_faculty_name = data.get('requested_faculty_name')
+    details = data.get('details')
+
+    if not all([course_code, details]):
+        return jsonify({"message": "Course code and request details are required."}), 400
+
+    success, message = faculty_request_controller.submit_faculty_request(
+        student_id, course_code, requested_faculty_name, details
+    )
+
+    if success:
+        return jsonify({"message": message}), 200
+    else:
+        return jsonify({"message": message}), 500
+
+# NEW: Endpoint to get available upcoming courses for student requests
+@app.route('/api/student/courses/upcoming', methods=['GET'])
+def get_upcoming_courses_api():
+    """
+    Retrieves a list of courses with 'upcoming' status.
+    """
+    token = request.headers.get('Authorization')
+    if not token or not token.startswith('Bearer '):
+        return jsonify({"message": "Authentication required."}), 401
+
+    student_id = get_student_id_from_token(token.split(' ')[1])
+    if not student_id:
+        return jsonify({"message": "Invalid session token."}), 401
+    
+    # Using student_controller to get courses which in turn uses CourseController
+    upcoming_courses = student_controller.get_courses_by_status(status='upcoming')
+    
+    # Format for frontend dropdown
+    formatted_courses = [{
+        'course_code': c.course_code,
+        'course_name': c.name
+    } for c in upcoming_courses]
+
+    return jsonify(formatted_courses), 200
 
 
 if __name__ == '__main__':

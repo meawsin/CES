@@ -90,6 +90,21 @@ const complaintSuccess = document.getElementById("complaintSuccess");
 
 let currentStudentData = null; // To store full student profile data
 
+// --- Robust Error Handling Helper ---
+function handleApiError(response) {
+    if (response.status === 401) {
+        alert('Session expired. Please log in again.');
+        localStorage.clear();
+        window.location.href = 'student_login.html';
+        return true;
+    }
+    if (response.status === 404) {
+        alert('Feature not available. Please contact admin.');
+        return true;
+    }
+    return false;
+}
+
 // --- Initialization ---
 document.addEventListener("DOMContentLoaded", () => {
     const studentToken = localStorage.getItem("studentToken");
@@ -98,6 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Redirect to login if no token or essential info is found
     if (!studentToken || !studentId || !studentName) {
+        localStorage.clear();
         window.location.href = "student_login.html";
         return;
     }
@@ -165,57 +181,31 @@ complaintsLink.addEventListener("click", (e) => { e.preventDefault(); showTab("c
 
 // --- Logout Functionality ---
 logoutButton.addEventListener("click", async () => {
-    const studentToken = localStorage.getItem("studentToken");
-    try {
-        const response = await fetch(`${API_BASE_URL}/student/logout`, {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${studentToken}`,
-            },
-        });
-        if (response.ok) {
-            localStorage.clear(); // Clear all local storage items
-            window.location.href = "student_login.html"; // Redirect to login page
-        } else {
-            // Handle server-side logout failure
-            const errorData = await response.json();
-            alert("Logout failed: " + (errorData.message || response.statusText));
-            console.error("Logout error:", errorData);
-        }
-    } catch (error) {
-        // Catching network errors and other exceptions
-        console.error("Network error during logout:", error);
-        alert("Network error during logout. Please check your connection.");
-    }
+    localStorage.clear();
+    window.location.href = "student_login.html";
 });
 
 // --- Helper function for authenticated API fetches ---
 async function authenticatedFetch(url, options = {}) {
     const studentToken = localStorage.getItem("studentToken");
     if (!studentToken) {
-        // If no token, redirect to login, as the user is not authenticated
         alert("Session expired or not logged in. Please log in again.");
-        localStorage.clear(); // Clear any stale data
+        localStorage.clear();
         window.location.href = "student_login.html";
         throw new Error("No authentication token found.");
     }
-
-    // Ensure headers exist and add Authorization header
     options.headers = {
         ...options.headers,
         Authorization: `Bearer ${studentToken}`,
     };
-
-    const response = await fetch(url, options);
-
-    // Handle 401 Unauthorized specifically
-    if (response.status === 401) {
-        alert("Session expired or unauthorized. Please log in again.");
-        localStorage.clear(); // Clear local storage to ensure fresh login
-        window.location.href = "student_login.html";
-        throw new Error("Unauthorized access, redirecting to login.");
+    let response;
+    try {
+        response = await fetch(url, options);
+    } catch (err) {
+        alert('Network error. Please check your API server.');
+        throw err;
     }
-
+    if (handleApiError(response)) throw new Error('API error handled');
     return response;
 }
 

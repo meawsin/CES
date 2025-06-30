@@ -77,18 +77,40 @@
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-teal-50 to-white min-h-screen flex flex-col">
-    <header class="bg-teal-700 text-white p-5 shadow-md flex justify-between items-center fixed top-0 w-full z-10">
-        <h1 class="text-2xl font-bold">📚 Course Evaluation System</h1>
-        <button id="backToDashboard" class="bg-teal-400 hover:bg-teal-300 text-teal-900 font-semibold px-4 py-2 rounded-lg shadow transition duration-300 ease-in-out transform hover:scale-105">
-            <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
-        </button>
-    </header>
+<body class="min-h-screen flex flex-col" style="background: linear-gradient(135deg, #e1f0df 0%, #d0e8e6 100%);">
+    <!-- Improved Tab Bar Navigation -->
+    <div class="w-full bg-white shadow-sm sticky top-0 z-20">
+        <div class="flex items-center justify-between px-8" style="min-height:64px;">
+            <div class="flex gap-8">
+                <button id="tabPendingEvaluations" class="tab-button flex items-center gap-2 text-gray-600 hover:text-teal-700 px-5 py-3 rounded-t-md transition-all">
+                    <i class="fas fa-hourglass-half"></i>Pending
+                </button>
+                <button id="tabMyProfile" class="tab-button flex items-center gap-2 text-gray-600 hover:text-teal-700 px-5 py-3 rounded-t-md transition-all">
+                    <i class="fas fa-user"></i>Profile
+                </button>
+                <button id="tabCompletedEvaluations" class="tab-button flex items-center gap-2 text-gray-600 hover:text-teal-700 px-5 py-3 rounded-t-md transition-all">
+                    <i class="fas fa-clipboard-check"></i>Completed
+                </button>
+                <button id="tabComplaints" class="tab-button flex items-center gap-2 text-gray-600 hover:text-teal-700 px-5 py-3 rounded-t-md transition-all">
+                    <i class="fas fa-comment-alt"></i>Complaint
+                </button>
+                <button id="tabRequestFaculty" class="tab-button flex items-center gap-2 text-gray-600 hover:text-teal-700 px-5 py-3 rounded-t-md transition-all">
+                    <i class="fas fa-chalkboard-teacher"></i>Request Faculty
+                </button>
+            </div>
+            <button id="logoutBtn" class="ml-8 bg-teal-400 hover:bg-teal-300 text-teal-900 font-semibold px-6 py-2 rounded-lg shadow transition duration-300 ease-in-out flex items-center gap-2"><i class="fas fa-sign-out-alt"></i>Logout</button>
+        </div>
+    </div>
+    <!-- End Improved Tab Bar Navigation -->
+    <div style="height:64px;"></div>
 
     <main class="container mx-auto main-container flex-grow pt-20"> <!-- Added pt-20 to offset fixed header -->
         <div id="evaluationFormContainer" class="card shadow-lg animate-fade-in">
             <h2 id="evaluationTitle" class="text-3xl font-bold text-gray-900 mb-4 text-center"></h2>
             <p id="evaluationInstructions" class="text-gray-700 mb-8 text-center leading-relaxed"></p>
+
+            <!-- Timer Display -->
+            <div id="evaluationTimer" class="text-center text-lg font-bold text-red-600 my-4"></div>
 
             <form id="evaluationForm" class="space-y-8">
                 <div id="questionsContainer" class="space-y-6">
@@ -167,6 +189,30 @@
                 e.preventDefault(); // Prevent default form submission
                 submitEvaluation(evalId, courseCode, studentToken);
             });
+
+            // Timer logic
+            let timerDuration = 45 * 60; // 45 minutes in seconds (default)
+            let timerInterval;
+
+            function startEvaluationTimer(duration) {
+                let timeLeft = duration;
+                const timerDisplay = document.getElementById('evaluationTimer');
+                function updateTimer() {
+                    const minutes = Math.floor(timeLeft / 60);
+                    const seconds = timeLeft % 60;
+                    timerDisplay.textContent = `You have ${minutes}m ${seconds.toString().padStart(2, '0')}s left to complete this evaluation.`;
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        timerDisplay.textContent = 'Time is up! Your evaluation is being submitted...';
+                        document.getElementById('evaluationForm').submit();
+                        // Optionally, disable all inputs here
+                    }
+                    timeLeft--;
+                }
+                updateTimer();
+                timerInterval = setInterval(updateTimer, 1000);
+            }
+            startEvaluationTimer(timerDuration);
         });
 
         async function loadEvaluationTemplate(evalId, token) {

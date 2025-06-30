@@ -224,3 +224,17 @@ class StudentController:
         else:
             return False, "Failed to submit complaint. Database error."
 
+    def get_complaints_for_student(self, student_id):
+        """
+        Fetches all complaints submitted by a specific student.
+        Returns a list of dicts with: issue_type, details, course_code, status.
+        """
+        query = """
+            SELECT issue_type, details, course_code, status
+            FROM complaints
+            WHERE student_id = %s
+            ORDER BY created_at DESC
+        """
+        data = self.db.fetch_data(query, (student_id,), fetch_all=True)
+        return data if data else []
+

@@ -351,3 +351,19 @@ INSERT INTO admin_calendar_events (title, description, event_date, admin_id) VAL
 ('Evaluation Period Ends', 'All evaluations for Fall 2025 must be completed', '2025-12-15', 1001),
 ('Faculty Meeting', 'Discuss Q3 performance and upcoming initiatives', '2025-10-20', 1001),
 ('Spring Semester Begins', 'New semester kickoff for 2026', '2026-01-20', 1010);
+
+
+-- faculty_requests Table: Stores student requests for faculty for upcoming courses
+CREATE TABLE faculty_requests (
+    request_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    student_id BIGINT NOT NULL,
+    course_code VARCHAR(20) NOT NULL,
+    requested_faculty_name VARCHAR(100) DEFAULT NULL, -- Student might request a faculty by name if ID is unknown
+    details TEXT,
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending' NOT NULL,
+    admin_comment TEXT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE,
+    FOREIGN KEY (course_code) REFERENCES courses(course_code) ON DELETE CASCADE
+);

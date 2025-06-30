@@ -6,100 +6,228 @@
     <title>Student Login - Course Evaluation System</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for eye icon (latest version for better icon choices) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-          xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
-          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .fade-in {
-            animation: fadeIn 1s ease-out forwards;
-            opacity: 0;
-        }
         @keyframes fadeIn {
-            to {
-                opacity: 1;
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        .float-animation {
+            animation: float 4s ease-in-out infinite;
         }
         body {
-            font-family: "Inter", sans-serif;
-            background-color: #e1f0df; /* Soft green background */
-        }
-        /* Ensures the container respects flexbox for centering */
-        .login-container {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #e1f0df 0%, #d0e8e6 100%);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
-        /* Removed .input-group styling as labels/inputs will now stack vertically */
+        .login-container {
+            perspective: 1000px;
+        }
+        .card {
+            transform-style: preserve-3d;
+            transition: all 0.5s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .input-focus:focus-within {
+            transform: scale(1.02);
+        }
+        .btn-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .wave-bg {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            overflow: hidden;
+            line-height: 0;
+        }
+        .wave-bg svg {
+            position: relative;
+            display: block;
+            width: calc(100% + 1.3px);
+            height: 150px;
+        }
+        .wave-bg .shape-fill {
+            fill: rgba(13, 175, 149, 0.1);
+        }
     </style>
 </head>
-<body>
-    <div class="login-container">
-        <div class="w-full max-w-md p-8 space-y-6 bg-white shadow-xl rounded-xl fade-in">
-            <div class="text-center">
-                <h2 class="text-3xl font-bold text-[#0C6379]">Student Evaluation</h2>
-                <p class="text-slate-600 mt-1">Enter Your ID and Password</p>
+<body class="relative overflow-x-hidden">
+    <!-- Floating decorative elements -->
+    <div class="absolute top-20 left-10 w-16 h-16 rounded-full bg-[#1DAF95] opacity-20 blur-xl float-animation"></div>
+    <div class="absolute bottom-1/4 right-20 w-24 h-24 rounded-full bg-[#0C6379] opacity-15 blur-xl float-animation" style="animation-delay: 0.5s;"></div>
+    <div class="absolute top-1/3 right-1/4 w-12 h-12 rounded-full bg-[#3BC490] opacity-20 blur-xl float-animation" style="animation-delay: 1s;"></div>
+
+    <div class="login-container min-h-screen flex items-center justify-center p-4">
+        <div class="card w-full max-w-md bg-white shadow-2xl rounded-2xl overflow-hidden fade-in">
+            <!-- Decorative header -->
+            <div class="bg-gradient-to-r from-[#0C6379] to-[#1DAF95] py-4 px-6">
+                <div class="flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-3xl mr-3"></i>
+                    <h1 class="text-2xl font-bold text-white">Course Evaluation System</h1>
+                </div>
             </div>
-
-            <form id="loginForm" class="space-y-6">
-                <!-- ID Label and Input (now stacked) -->
-                <div>
-                    <label for="studentId" class="block text-sm font-medium text-gray-700 mb-1">ID</label>
-                    <input type="text" id="studentId" name="id" required
-                           class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm" />
+            
+            <div class="p-8 space-y-6">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-[#0C6379]">Student Login</h2>
+                    <p class="text-slate-600 mt-2">Access your course evaluations</p>
                 </div>
 
-                <!-- Password Label and Input (now stacked) -->
-                <div class="relative">
-                    <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                    <input type="password" id="password" name="password" required
-                           class="block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-[#3BC490] focus:border-[#3BC490] sm:text-sm" />
-                    <!-- Eye icon to toggle password visibility -->
-                    <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5" style="top: 2rem;">
-                        <i id="togglePassword" class="fas fa-eye cursor-pointer text-gray-500 hover:text-gray-700"></i>
-                    </span>
-                </div>
+                <form id="loginForm" class="space-y-6">
+                    <!-- ID Input -->
+                    <div class="input-focus transition-transform duration-300">
+                        <label for="studentId" class="block text-sm font-medium text-gray-700 mb-1">Student ID</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-id-card text-gray-400"></i>
+                            </div>
+                            <input type="text" id="studentId" name="id" required
+                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1DAF95] focus:border-[#1DAF95] sm:text-sm"
+                                   placeholder="Enter your student ID">
+                        </div>
+                    </div>
 
-                <div id="messageBox" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                    <strong class="font-bold">Error!</strong>
-                    <span class="block sm:inline" id="messageText"></span>
-                </div>
+                    <!-- Password Input -->
+                    <div class="input-focus transition-transform duration-300">
+                        <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-lock text-gray-400"></i>
+                            </div>
+                            <input type="password" id="password" name="password" required
+                                   class="block w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3BC490] focus:border-[#3BC490] sm:text-sm"
+                                   placeholder="Enter your password">
+                            <span class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                <i id="togglePassword" class="fas fa-eye cursor-pointer text-gray-500 hover:text-gray-700"></i>
+                            </span>
+                        </div>
+                    </div>
 
-                <div>
-                    <button type="submit"
-                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-md text-sm font-medium text-white bg-[#1DAF95] hover:bg-[#109193] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1DAF95]">
-                        Log in
-                    </button>
+                    <!-- Remember Me & Forgot Password -->
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm">
+                            <a href="#" class="font-medium text-[#0C6379] hover:text-[#1DAF95]">Forgot password?</a>
+                        </div>
+                    </div>
+
+                    <!-- Message Box -->
+                    <div id="messageBox" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-lg" role="alert">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-circle text-red-500"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-700">Error</h3>
+                                <div class="mt-1 text-sm text-red-600" id="messageText"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div>
+                        <button type="submit"
+                                class="btn-hover w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-medium text-white bg-gradient-to-r from-[#1DAF95] to-[#0C6379] hover:from-[#0C6379] hover:to-[#1DAF95] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1DAF95] transition-all duration-300">
+                            <i class="fas fa-sign-in-alt mr-2"></i> Log in
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center text-sm text-gray-500">
+                    Don't have an account? 
+                    <a href="#" class="font-medium text-[#0C6379] hover:text-[#1DAF95]">Contact administrator</a>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
-    <script>
-        const API_BASE_URL = "http://127.0.0.1:5000/api"; // Replace with your Flask API URL
+    <!-- Wave background decoration -->
+    <div class="wave-bg">
+        <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" class="shape-fill"></path>
+            <path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5" class="shape-fill"></path>
+            <path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84-23.61,127.61-34.34,59.8-15.81,112.44-23.2,168.5-23.2,53.55,0,104.4,8.1,153.76,32.07,69.07,35.73,120.41,102.08,156.67,186.21,46.76,86.31,79.88,194.33,81.28,232.56,1.48,39.56-18.35,88.58-52.42,115.83-34.07,27.25-78.23,39.58-126.83,44.61V0Z" class="shape-fill"></path>
+        </svg>
+    </div>
 
-        // Get elements for password toggle
+    <nav class="bg-teal-700 text-white p-4 shadow-md fixed top-0 w-full z-20 flex justify-between items-center">
+        <div class="flex items-center gap-4">
+            <i class="fas fa-graduation-cap text-2xl"></i>
+            <span class="text-xl font-bold">Course Evaluation System</span>
+        </div>
+        <div class="flex items-center gap-6">
+            <a href="student_dashboard.html" class="hover:text-teal-200 font-semibold flex items-center gap-1"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="request_faculty.html" class="hover:text-teal-200 font-semibold flex items-center gap-1"><i class="fas fa-chalkboard-teacher"></i> Request Faculty</a>
+            <a href="#" id="navComplaints" class="hover:text-teal-200 font-semibold flex items-center gap-1"><i class="fas fa-exclamation-triangle"></i> Complaints</a>
+            <a href="#" id="navPastEvaluations" class="hover:text-teal-200 font-semibold flex items-center gap-1"><i class="fas fa-clipboard-check"></i> Past Evaluations</a>
+            <button id="logoutBtn" class="bg-teal-400 hover:bg-teal-300 text-teal-900 font-semibold px-3 py-1 rounded-lg shadow transition duration-300 ease-in-out flex items-center gap-1"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            <span id="headerStudentName" class="ml-4 text-lg font-medium"></span>
+            <img id="navProfileImage" src="https://placehold.co/40x40/cccccc/ffffff?text=Profile" alt="Profile" class="w-10 h-10 rounded-full border-2 border-teal-400 object-cover hidden" />
+        </div>
+    </nav>
+    <div style="height:64px;"></div>
+
+    <script>
+        const API_BASE_URL = "http://127.0.0.1:5000/api";
+
+        // On page load, check for existing session in localStorage only
+        (function() {
+            const token = localStorage.getItem('studentToken');
+            const studentId = localStorage.getItem('studentId');
+            const studentName = localStorage.getItem('studentName');
+            if (token && studentId && studentName) {
+                window.location.href = "student_dashboard.html";
+            }
+        })();
+
+        // Password toggle functionality
         const passwordInput = document.getElementById('password');
         const togglePassword = document.getElementById('togglePassword');
 
-        // Toggle password visibility
         togglePassword.addEventListener('click', function () {
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
-            // Toggle the eye icon class
             this.classList.toggle('fa-eye');
             this.classList.toggle('fa-eye-slash');
+            
+            // Add animation to the icon
+            this.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 200);
         });
 
+        // Form submission with enhanced UX
         document.getElementById("loginForm").addEventListener("submit", async (e) => {
             e.preventDefault();
+            const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            
             const studentId = document.getElementById("studentId").value;
             const password = document.getElementById("password").value;
             const messageBox = document.getElementById("messageBox");
             const messageText = document.getElementById("messageText");
 
-            messageBox.classList.add("hidden"); // Hide previous messages
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Authenticating...';
+            messageBox.classList.add("hidden");
 
             try {
                 const response = await fetch(`${API_BASE_URL}/student/login`, {
@@ -116,24 +244,48 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Store token and user info (e.g., in localStorage or sessionStorage)
+                    // Success animation
+                    submitBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Success!';
+                    submitBtn.classList.remove('bg-gradient-to-r', 'from-[#1DAF95]', 'to-[#0C6379]', 'hover:from-[#0C6379]', 'hover:to-[#1DAF95]');
+                    submitBtn.classList.add('bg-green-500');
+                    // Store token and user info in localStorage only
                     localStorage.setItem("studentToken", data.token);
                     localStorage.setItem("studentId", data.student_id);
                     localStorage.setItem("studentName", data.student_name);
-
-                    // Redirect to student dashboard
-                    window.location.href = "student_dashboard.html";
+                    sessionStorage.clear();
+                    // Redirect after short delay
+                    setTimeout(() => {
+                        window.location.href = "student_dashboard.html";
+                    }, 1000);
                 } else {
-                    messageText.textContent =
-                        data.message || "Login failed. Please check your credentials.";
+                    // Show error message with shake animation
+                    messageText.textContent = data.message || "Login failed. Please check your credentials.";
                     messageBox.classList.remove("hidden");
+                    messageBox.classList.add("animate-[shake_0.5s]");
+                    setTimeout(() => messageBox.classList.remove("animate-[shake_0.5s]"), 500);
+                    // Reset button
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
                 }
             } catch (error) {
                 console.error("Login error:", error);
-                messageText.textContent =
-                    "Network error or server unavailable. Please try again later.";
+                messageText.textContent = "Network error or server unavailable. Please try again later.";
                 messageBox.classList.remove("hidden");
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
             }
+        });
+
+        // Add input focus effects
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.parentElement.classList.add('input-focus');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.parentElement.classList.remove('input-focus');
+            });
         });
     </script>
 </body>

@@ -187,41 +187,33 @@
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-teal-50 to-white min-h-screen flex flex-col">
-    <!-- Header -->
-    <header class="bg-teal-700 text-white p-5 shadow-md flex justify-between items-center fixed top-0 w-full z-10">
-        <h1 class="text-2xl font-bold">📚 Course Evaluation System</h1>
-        <div class="flex items-center gap-4">
-            <span id="headerStudentName" class="text-lg font-medium"></span>
-            <button id="logoutBtn" class="bg-teal-400 hover:bg-teal-300 text-teal-900 font-semibold px-4 py-2 rounded-lg shadow transition duration-300 ease-in-out transform hover:scale-105">
-                <i class="fas fa-sign-out-alt mr-2"></i>Logout
-            </button>
+<body class="min-h-screen flex flex-col" style="background: linear-gradient(135deg, #e1f0df 0%, #d0e8e6 100%);">
+    <!-- Improved Tab Bar Navigation -->
+    <div class="w-full bg-white shadow-sm sticky top-0 z-20">
+        <div class="flex items-center justify-between px-8" style="min-height:64px;">
+            <div class="flex gap-8">
+                <button id="tabPendingEvaluations" class="tab-button flex items-center gap-2 text-gray-600 hover:text-teal-700 px-5 py-3 rounded-t-md transition-all">
+                    <i class="fas fa-hourglass-half"></i>Pending
+                </button>
+                <button id="tabMyProfile" class="tab-button flex items-center gap-2 text-gray-600 hover:text-teal-700 px-5 py-3 rounded-t-md transition-all">
+                    <i class="fas fa-user"></i>Profile
+                </button>
+                <button id="tabCompletedEvaluations" class="tab-button flex items-center gap-2 text-gray-600 hover:text-teal-700 px-5 py-3 rounded-t-md transition-all">
+                    <i class="fas fa-clipboard-check"></i>Completed
+                </button>
+                <button id="tabComplaints" class="tab-button flex items-center gap-2 text-gray-600 hover:text-teal-700 px-5 py-3 rounded-t-md transition-all">
+                    <i class="fas fa-comment-alt"></i>Complaint
+                </button>
+                <button id="tabRequestFaculty" class="tab-button flex items-center gap-2 text-gray-600 hover:text-teal-700 px-5 py-3 rounded-t-md transition-all">
+                    <i class="fas fa-chalkboard-teacher"></i>Request Faculty
+                </button>
+            </div>
+            <button id="logoutBtn" class="ml-8 bg-teal-400 hover:bg-teal-300 text-teal-900 font-semibold px-6 py-2 rounded-lg shadow transition duration-300 ease-in-out flex items-center gap-2"><i class="fas fa-sign-out-alt"></i>Logout</button>
         </div>
-    </header>
+    </div>
+    <!-- End Improved Tab Bar Navigation -->
 
     <div class="flex flex-grow pt-20"> <!-- Added pt-20 to offset fixed header -->
-
-        <!-- Sidebar -->
-        <!-- Adjusted width for better responsiveness: w-full on small screens, md:w-64 on medium and up -->
-        <aside class="w-full md:w-64 bg-teal-100 text-teal-800 flex flex-col justify-between min-h-screen p-6 shadow-lg">
-            <div>
-                <h2 class="text-xl font-bold mb-6 text-teal-900">☰ Menu</h2>
-                <nav class="space-y-3">
-                    <a href="#" id="pendingEvaluationsLink" class="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-teal-200 transition duration-200 ease-in-out group">
-                        <i class="fas fa-hourglass-half group-hover:scale-110 transition-transform"></i> Pending Evaluations
-                    </a>
-                    <a href="#" id="myProfileLink" class="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-teal-200 transition duration-200 ease-in-out group">
-                        <i class="fas fa-user-circle group-hover:scale-110 transition-transform"></i> My Profile
-                    </a>
-                    <a href="#" id="completedEvaluationsLink" class="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-teal-200 transition duration-200 ease-in-out group">
-                        <i class="fas fa-clipboard-check group-hover:scale-110 transition-transform"></i> Completed Evaluations
-                    </a>
-                    <a href="#" id="complaintsLink" class="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-teal-200 transition duration-200 ease-in-out group">
-                        <i class="fas fa-exclamation-triangle group-hover:scale-110 transition-transform"></i> Submit Complaint
-                    </a>
-                </nav>
-            </div>
-        </aside>
 
         <!-- Main Content -->
         <main class="flex-grow p-4 sm:p-8 space-y-10 overflow-auto"> <!-- Adjusted padding for smaller screens -->
@@ -233,22 +225,6 @@
                     <p id="studentBatchDepartment" class="text-gray-600 mt-1"></p>
                 </div>
                 <img id="profileImage" src="https://placehold.co/100x100/cccccc/ffffff?text=Profile" alt="Profile Picture" class="w-24 h-24 rounded-full shadow-lg border-4 border-teal-400 object-cover transform transition-transform duration-300 hover:scale-105" />
-            </div>
-
-            <!-- Tab Buttons -->
-            <div class="flex flex-wrap gap-x-6 gap-y-2 border-b-2 border-gray-200 pb-2">
-                <button id="tabPendingEvaluations" class="tab-button text-gray-600 hover:text-teal-700 px-4 py-2 font-semibold rounded-t-md">
-                    <i class="fas fa-hourglass-half mr-2"></i>Pending
-                </button>
-                <button id="tabMyProfile" class="tab-button text-gray-600 hover:text-teal-700 px-4 py-2 font-semibold rounded-t-md">
-                    <i class="fas fa-user mr-2"></i>Profile
-                </button>
-                <button id="tabCompletedEvaluations" class="tab-button text-gray-600 hover:text-teal-700 px-4 py-2 font-semibold rounded-t-md">
-                    <i class="fas fa-clipboard-check mr-2"></i>Completed
-                </button>
-                <button id="tabComplaints" class="tab-button text-gray-600 hover:text-teal-700 px-4 py-2 font-semibold rounded-t-md">
-                    <i class="fas fa-comment-alt mr-2"></i>Complaint
-                </button>
             </div>
 
             <!-- Tab Contents Containers -->
@@ -281,6 +257,10 @@
                 </div>
                 
                 <div id="profileDetails" class="space-y-4 hidden bg-white p-6 rounded-lg shadow-lg">
+                    <div class="flex flex-col items-center mb-6">
+                        <img id="profileImagePreview" src="https://placehold.co/100x100/cccccc/ffffff?text=Profile" alt="Profile Picture" class="w-24 h-24 rounded-full shadow-lg border-4 border-teal-400 object-cover mb-2" />
+                        <input type="file" id="profileImageUpload" accept="image/*" class="mt-2" />
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
                         <div class="profile-field-item">
                             <label>Student ID:</label>
@@ -330,20 +310,8 @@
                             <label>CGPA:</label>
                             <span id="profileCgpa" class="text-gray-800 profile-field-value"></span>
                         </div>
-                        <div class="profile-field-item col-span-1 md:col-span-2 relative"> <!-- Span full width on larger screens -->
-                            <label class="w-full">Behavioral Records:</label>
-                            <span id="profileBehavioralRecords" class="text-gray-800 editable-field-display profile-field-value w-full"></span>
-                            <textarea id="editBehavioralRecords" rows="3" class="hidden editable-field-input"></textarea>
-                            <i class="fas fa-pen edit-icon" data-field="behavioral_records" style="top: 1rem;"></i>
-                        </div>
-                        <div class="profile-field-item col-span-1 md:col-span-2 relative">
-                            <label class="w-full">Profile Picture URL:</label>
-                            <span id="profilePictureUrl" class="text-gray-800 editable-field-display profile-field-value w-full"></span>
-                            <input type="text" id="editProfilePictureUrl" class="hidden editable-field-input" />
-                            <i class="fas fa-pen edit-icon" data-field="profile_picture" style="top: 1rem;"></i>
-                        </div>
                     </div>
-                    <button id="saveProfileButton" class="hidden mt-6 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    <button id="saveProfileButton" class="mt-6 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
                         <i class="fas fa-save mr-2"></i>Save Changes
                     </button>
                 </div>
@@ -368,6 +336,12 @@
             <!-- Complaints Content -->
             <div id="complaintsContent" class="tab-content space-y-4">
                 <h3 class="text-2xl font-semibold text-teal-800">Submit a Complaint</h3>
+                <!-- Complaint List Section -->
+                <div id="complaintListSection" class="mb-8">
+                    <h4 class="text-lg font-bold text-gray-700 mb-2">Your Previous Complaints</h4>
+                    <div id="complaintList" class="space-y-3"></div>
+                    <div id="noComplaintsMsg" class="hidden text-gray-500 text-center py-4">You have not submitted any complaints yet.</div>
+                </div>
                 <div class="bg-white p-6 rounded-lg shadow-lg">
                     <form id="complaintForm" class="space-y-4">
                         <div>
@@ -413,5 +387,51 @@
     </div>
 
     <script src="webbackend.js"></script>
+    <script>
+    async function loadComplaintList() {
+        const complaintList = document.getElementById('complaintList');
+        const noComplaintsMsg = document.getElementById('noComplaintsMsg');
+        complaintList.innerHTML = '';
+        noComplaintsMsg.classList.add('hidden');
+        try {
+            const token = localStorage.getItem('studentToken');
+            const response = await fetch(`${API_BASE_URL}/student/complaints/list`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const complaints = await response.json();
+                if (complaints.length === 0) {
+                    noComplaintsMsg.classList.remove('hidden');
+                } else {
+                    complaints.forEach(c => {
+                        const card = document.createElement('div');
+                        card.className = 'bg-gray-50 border rounded-lg p-4 flex flex-col md:flex-row md:items-center justify-between shadow-sm';
+                        card.innerHTML = `
+                            <div>
+                                <div class='font-semibold text-gray-800'>${c.issue_type}</div>
+                                <div class='text-gray-600 text-sm mb-1'>${c.details}</div>
+                                <div class='text-xs text-gray-400'>${c.course_code ? 'Course: ' + c.course_code : ''}</div>
+                            </div>
+                            <div class='mt-2 md:mt-0'>
+                                <span class='px-3 py-1 rounded-full text-xs font-bold ${c.status === 'Resolved' ? 'bg-green-200 text-green-800' : 'bg-yellow-100 text-yellow-700'}'>${c.status}</span>
+                            </div>
+                        `;
+                        complaintList.appendChild(card);
+                    });
+                }
+            } else {
+                noComplaintsMsg.textContent = 'Failed to load complaints.';
+                noComplaintsMsg.classList.remove('hidden');
+            }
+        } catch (e) {
+            noComplaintsMsg.textContent = 'Error loading complaints.';
+            noComplaintsMsg.classList.remove('hidden');
+        }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        // ... existing code ...
+        loadComplaintList();
+    });
+    </script>
 </body>
 </html>
