@@ -18,16 +18,28 @@ class CourseEvaluationApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title(APP_NAME)
-        # Set the window to maximized state, not fullscreen
-        self.state('zoomed')
+        
+        # Get screen dimensions
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        
+        # Set window to full screen size minus taskbar (approximately 40px)
+        window_width = screen_width
+        window_height = screen_height - 40  # Leave space for taskbar
+        
+        # Center the window and set size
+        x = (screen_width - window_width) // 2
+        y = 0  # Start from top
+        self.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        
+        # Prevent window from being resized smaller than this
+        self.minsize(window_width, window_height)
 
         self.root_window = self
 
-        # CustomTkinter global theme setup.
-        # The login page will use hardcoded colors, so its appearance won't change with this.
-        # The dashboard and other pages will respond to this.
-        ctk.set_appearance_mode("Light") # Default to Light mode for the main app after login
-        ctk.set_default_color_theme("blue") # A default color theme for the main app
+        # CustomTkinter global theme setup with enhanced color scheme
+        ctk.set_appearance_mode("Light")  # Default to Light mode for the main app after login
+        ctk.set_default_color_theme("blue")  # A default color theme for the main app
 
         self.container = ctk.CTkFrame(self)
         self.container.pack(side="top", fill="both", expand=True)

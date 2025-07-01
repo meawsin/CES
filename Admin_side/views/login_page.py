@@ -29,62 +29,68 @@ class LoginPage(ctk.CTkFrame):
         self.create_widgets()
 
     def create_widgets(self):
-        # Central login card frame
-        login_frame = ctk.CTkFrame(self, corner_radius=15, fg_color=self.fixed_frame_fg_color,
-                                   border_width=1, border_color=self.fixed_entry_border_color) # Added border for card
+        # Enhanced central login card frame with shadow effect
+        login_frame = ctk.CTkFrame(self, corner_radius=20, fg_color=self.fixed_frame_fg_color,
+                                   border_width=2, border_color="#e0e0e0")
         login_frame.place(relx=0.5, rely=0.5, anchor="center")
 
-        # Title Label
-        title_label = ctk.CTkLabel(login_frame, text="Admin Login",
-                                   font=ctk.CTkFont(family="Arial", size=36, weight="bold"),
-                                   text_color=self.fixed_text_color)
-        title_label.grid(row=0, column=0, columnspan=2, pady=(30, 20), padx=40)
+        # Enhanced Title Label with icon
+        title_label = ctk.CTkLabel(login_frame, text="🔐 Admin Login",
+                                   font=ctk.CTkFont(family="Arial", size=40, weight="bold"),
+                                   text_color="#1565c0")
+        title_label.grid(row=0, column=0, columnspan=2, pady=(40, 30), padx=50)
 
-        # Email
-        email_label = ctk.CTkLabel(login_frame, text="Email:",
-                                   font=ctk.CTkFont(family="Arial", size=18),
-                                   text_color=self.fixed_text_color)
-        email_label.grid(row=1, column=0, padx=(40, 10), pady=(10, 5), sticky="w")
-        self.email_entry = ctk.CTkEntry(login_frame, width=350, height=45,
+        # Subtitle
+        subtitle_label = ctk.CTkLabel(login_frame, text="Course Evaluation System",
+                                     font=ctk.CTkFont(family="Arial", size=16),
+                                     text_color="#666666")
+        subtitle_label.grid(row=1, column=0, columnspan=2, pady=(0, 30), padx=50)
+
+        # Email with enhanced styling
+        email_label = ctk.CTkLabel(login_frame, text="📧 Email:",
+                                   font=ctk.CTkFont(family="Arial", size=18, weight="bold"),
+                                   text_color="#2c3e50")
+        email_label.grid(row=2, column=0, padx=(50, 10), pady=(15, 8), sticky="w")
+        self.email_entry = ctk.CTkEntry(login_frame, width=380, height=50,
                                         font=ctk.CTkFont(family="Arial", size=16),
-                                        placeholder_text="Enter your email",
-                                        fg_color=self.fixed_entry_fg_color,
-                                        text_color=self.fixed_entry_text_color,
-                                        corner_radius=8,
-                                        border_width=1,
-                                        border_color=self.fixed_entry_border_color)
-        self.email_entry.grid(row=2, column=0, columnspan=2, padx=40, pady=(0, 20), sticky="ew")
+                                        placeholder_text="Enter your email address",
+                                        fg_color="#f8f9fa",
+                                        text_color="#2c3e50",
+                                        corner_radius=12,
+                                        border_width=2,
+                                        border_color="#dee2e6")
+        self.email_entry.grid(row=3, column=0, columnspan=2, padx=50, pady=(0, 25), sticky="ew")
         self.email_entry.insert(0, "so1ICT@bup.com") # Pre-fill for quick testing
 
-        # Password
-        password_label = ctk.CTkLabel(login_frame, text="Password:",
-                                      font=ctk.CTkFont(family="Arial", size=18),
-                                      text_color=self.fixed_text_color)
-        password_label.grid(row=3, column=0, padx=(40, 10), pady=(10, 5), sticky="w")
-        self.password_entry = ctk.CTkEntry(login_frame, show="*", width=350, height=45,
+        # Password with enhanced styling
+        password_label = ctk.CTkLabel(login_frame, text="🔒 Password:",
+                                      font=ctk.CTkFont(family="Arial", size=18, weight="bold"),
+                                      text_color="#2c3e50")
+        password_label.grid(row=4, column=0, padx=(50, 10), pady=(15, 8), sticky="w")
+        self.password_entry = ctk.CTkEntry(login_frame, show="*", width=380, height=50,
                                            font=ctk.CTkFont(family="Arial", size=16),
                                            placeholder_text="Enter your password",
-                                           fg_color=self.fixed_entry_fg_color,
-                                           text_color=self.fixed_entry_text_color,
-                                           corner_radius=8,
-                                           border_width=1,
-                                           border_color=self.fixed_entry_border_color)
-        self.password_entry.grid(row=4, column=0, columnspan=2, padx=40, pady=(0, 30), sticky="ew")
+                                           fg_color="#f8f9fa",
+                                           text_color="#2c3e50",
+                                           corner_radius=12,
+                                           border_width=2,
+                                           border_color="#dee2e6")
+        self.password_entry.grid(row=5, column=0, columnspan=2, padx=50, pady=(0, 35), sticky="ew")
         self.password_entry.insert(0, "1234") # Pre-fill for quick testing
 
-        # Login Button
-        login_button = ctk.CTkButton(login_frame, text="Login", command=self.handle_login,
+        # Enhanced Login Button
+        login_button = ctk.CTkButton(login_frame, text="🚀 Login", command=self.handle_login,
                                      font=ctk.CTkFont(family="Arial", size=20, weight="bold"),
-                                     height=55, corner_radius=10,
-                                     fg_color=self.fixed_button_fg_color,
-                                     hover_color=self.fixed_button_hover_color,
-                                     text_color=self.fixed_button_text_color)
-        login_button.grid(row=5, column=0, columnspan=2, padx=40, pady=(0, 30), sticky="ew")
+                                     height=60, corner_radius=15,
+                                     fg_color="#3498db",
+                                     hover_color="#2980b9",
+                                     text_color="white")
+        login_button.grid(row=6, column=0, columnspan=2, padx=50, pady=(0, 25), sticky="ew")
 
-        # Error Message Label
-        self.error_label = ctk.CTkLabel(login_frame, text="", text_color=self.fixed_error_text_color,
-                                        font=ctk.CTkFont(family="Arial", size=14))
-        self.error_label.grid(row=6, column=0, columnspan=2, pady=(0, 20))
+        # Enhanced Error Message Label
+        self.error_label = ctk.CTkLabel(login_frame, text="", text_color="#e74c3c",
+                                        font=ctk.CTkFont(family="Arial", size=14, weight="bold"))
+        self.error_label.grid(row=7, column=0, columnspan=2, pady=(0, 30))
 
         # Bind Enter key to login
         self.email_entry.bind("<Return>", lambda event: self.password_entry.focus_set())
