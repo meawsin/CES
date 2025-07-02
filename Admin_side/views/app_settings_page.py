@@ -40,7 +40,7 @@ class AppSettingsPage(ctk.CTkFrame): # Changed from tk.Frame
         settings_frame.pack(pady=10, padx=20, fill="x")
 
         # Auto Logout Minutes Input
-        ctk.CTkLabel(settings_frame, text="Auto Logout (minutes):").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        ctk.CTkLabel(settings_frame, text="Auto Logout (minutes):", font=ctk.CTkFont(family="Arial", size=20)).grid(row=0, column=0, padx=10, pady=10, sticky="w")
         self.auto_logout_entry = ctk.CTkEntry(settings_frame, width=100) # Changed from ttk.Entry
         self.auto_logout_entry.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
         self.auto_logout_entry.insert(0, "30") # Default value shown in the entry field
@@ -48,7 +48,12 @@ class AppSettingsPage(ctk.CTkFrame): # Changed from tk.Frame
         settings_frame.grid_columnconfigure(1, weight=1) # Allow the entry field to expand
 
         # Save Settings Button
-        save_button = ctk.CTkButton(settings_frame, text="Save Settings", command=self.save_settings) # Changed from ttk.Button
+        save_button = ctk.CTkButton(
+            settings_frame,
+            text="Save Settings",
+            command=self.save_settings,
+            font=ctk.CTkFont(family="Arial", size=20)
+        )  # Changed from ttk.Button
         save_button.grid(row=1, column=0, columnspan=2, pady=20)
 
     def load_settings(self):

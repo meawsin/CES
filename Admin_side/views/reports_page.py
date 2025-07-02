@@ -6,6 +6,8 @@ from controllers.report_controller import ReportController
 from controllers.course_controller import CourseController # For filter dropdowns
 from controllers.faculty_controller import FacultyController # For filter dropdowns
 import json # For pretty printing JSON feedback
+from PIL import Image, ImageTk
+import os
 
 class ReportsPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -20,6 +22,7 @@ class ReportsPage(tk.Frame):
         self.rowconfigure(1, weight=1) # Allow treeview to expand
 
         self.current_report_data = None # Store the last generated report
+        self.graph_images = {}  # To keep references to PhotoImage objects
 
         self.create_widgets()
         self.load_filter_options()
@@ -93,6 +96,12 @@ class ReportsPage(tk.Frame):
         self.raw_json_text.config(yscrollcommand=raw_json_scrollbar_y.set)
         raw_json_scrollbar_y.pack(side="right", fill="y")
 
+        # Tab 3: Graphs
+        self.graphs_frame = ttk.Frame(self.report_notebook, padding="10")
+        self.report_notebook.add(self.graphs_frame, text="Graphs")
+        self.graph_canvas_frame = tk.Frame(self.graphs_frame, bg="#ECF0F1")
+        self.graph_canvas_frame.pack(fill="both", expand=True)
+
         self.report_tree.bind("<<TreeviewSelect>>", self.display_raw_json_for_selected)
 
 
@@ -158,12 +167,35 @@ class ReportsPage(tk.Frame):
             messagebox.showinfo("Report", report_result['summary'])
             return
 
+        # Clear previous graphs
+        for widget in self.graph_canvas_frame.winfo_children():
+            widget.destroy()
+        self.graph_images.clear()
+        # Generate and display graphs
+        graph_paths = self.report_controller.generate_question_graphs(self.current_report_data)
+        for idx, (question_text, img_path) in enumerate(graph_paths.items()):
+            if os.path.exists(img_path):
+                try:
+                    img = Image.open(img_path)
+                    img = img.resize((400, 300), Image.ANTIALIAS)
+                    photo = ImageTk.PhotoImage(img)
+                except Exception:
+                    photo = tk.PhotoImage(file=img_path)
+                self.graph_images[question_text] = photo
+                label = tk.Label(self.graph_canvas_frame, text=question_text, font=("Arial", 12, "bold"), bg="#ECF0F1")
+                label.pack(pady=(20 if idx > 0 else 10, 5))
+                img_label = tk.Label(self.graph_canvas_frame, image=photo, bg="#ECF0F1")
+                img_label.pack(pady=5)
+
         for question_text, q_data in self.current_report_data.items():
             details = ""
             if q_data['type'] in ['rating', 'multiple_choice']:
                 # Sort options by count for better readability
                 sorted_options = sorted(q_data['data'].items(), key=lambda item: item[1], reverse=True)
                 details = ", ".join([f"{opt}: {count}" for opt, count in sorted_options])
+                # Show average for rating questions
+                if q_data['type'] == 'rating' and 'average' in q_data:
+                    details += f" | Average: {q_data['average']}"
             elif q_data['type'] == 'text':
                 details = f"{len(q_data['data'].get('comments', []))} comments (click row for full text)"
 

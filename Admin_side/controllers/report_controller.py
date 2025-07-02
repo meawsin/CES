@@ -8,6 +8,7 @@ import json
 import pandas as pd # For CSV/Excel export (requires `pip install pandas openpyxl`)
 import os
 from tkinter import filedialog, messagebox
+import matplotlib.pyplot as plt # For graph generation
 
 class ReportController:
     def __init__(self):
@@ -68,6 +69,8 @@ class ReportController:
 
         aggregated_results = {}
         total_submissions = 0
+        rating_sums = {}  # For average calculation
+        rating_counts = {}
 
         # Aggregate feedback
         for eval_row in all_evaluations_data:
@@ -97,9 +100,17 @@ class ReportController:
                     }
 
                 # Aggregate data based on question type
-                if question_type == 'rating' or question_type == 'multiple_choice':
+                if question_type == 'rating':
                     if answer:
-                        # Ensure options are strings for counting, handle lists for multiple select
+                        try:
+                            rating_value = int(str(answer).split(' ')[0])
+                            rating_sums[question_text] = rating_sums.get(question_text, 0) + rating_value
+                            rating_counts[question_text] = rating_counts.get(question_text, 0) + 1
+                            aggregated_results[question_text]['data'][str(answer)] = aggregated_results[question_text]['data'].get(str(answer), 0) + 1
+                        except (ValueError, IndexError):
+                            pass
+                elif question_type == 'multiple_choice':
+                    if answer:
                         if isinstance(answer, list):
                             for opt in answer:
                                 aggregated_results[question_text]['data'][str(opt)] = aggregated_results[question_text]['data'].get(str(opt), 0) + 1
@@ -117,6 +128,11 @@ class ReportController:
                 if 'General Comments' not in aggregated_results:
                     aggregated_results['General Comments'] = {"type": "text", "data": {"comments": []}}
                 aggregated_results['General Comments']['data']['comments'].append(general_comment)
+
+        # Add average score for rating questions
+        for question_text in rating_sums:
+            avg = rating_sums[question_text] / rating_counts[question_text] if rating_counts[question_text] > 0 else 0
+            aggregated_results[question_text]['average'] = round(avg, 2)
 
         return {
             "summary": "Report generated successfully.",
@@ -235,3 +251,35 @@ class ReportController:
         except Exception as e:
             messagebox.showerror("Export Error", f"Failed to export report: {e}")
             return f"Error during export: {e}"
+
+    def generate_question_graphs(self, report_data, output_dir="report_graphs"):
+        """
+        Generates bar or pie charts for each question in the report_data and saves them as images.
+        Returns a dict mapping question_text to image file paths.
+        """
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        image_paths = {}
+        for question_text, qdata in report_data.items():
+            qtype = qdata.get("type")
+            data = qdata.get("data", {})
+            if qtype in ["rating", "multiple_choice"] and data:
+                labels = list(data.keys())
+                values = list(data.values())
+                plt.figure(figsize=(6, 4))
+                if qtype == "rating" and len(labels) > 1:
+                    plt.bar(labels, values, color="#1976d2")
+                    plt.title(f"{question_text} (Ratings)")
+                    plt.xlabel("Rating")
+                    plt.ylabel("Count")
+                elif qtype == "multiple_choice":
+                    plt.pie(values, labels=labels, autopct='%1.1f%%', startangle=140)
+                    plt.title(f"{question_text} (MCQ)")
+                else:
+                    continue
+                img_path = os.path.join(output_dir, f"{question_text[:30].replace(' ', '_')}.png")
+                plt.tight_layout()
+                plt.savefig(img_path)
+                plt.close()
+                image_paths[question_text] = img_path
+        return image_paths

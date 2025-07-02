@@ -75,12 +75,12 @@ class DashboardPage(ctk.CTkFrame):
         """
         Creates the navigation sidebar on the left side of the dashboard with enhanced styling.
         """
-        self.sidebar_frame = ctk.CTkFrame(self, width=280, corner_radius=0, fg_color="#2c3e50")
+        self.sidebar_frame = ctk.CTkFrame(self, width=280, corner_radius=0, fg_color="#ffffff")
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
         self.sidebar_frame.grid_propagate(False)
         
         # User info section with gradient-like effect
-        user_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="#34495e", corner_radius=12)
+        user_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="#fcfcfc", corner_radius=12)
         user_frame.pack(pady=20, padx=15, fill="x")
         
         self.user_info_label = ctk.CTkLabel(user_frame, text="", font=("Arial", 18, "bold"), 
@@ -244,7 +244,7 @@ class DashboardPage(ctk.CTkFrame):
         Creates and lays out the widgets for the dashboard's home content area with enhanced styling.
         Includes info cards, real-time clock, and an interactive calendar.
         """
-        home_frame = ctk.CTkFrame(self.content_frame, corner_radius=16, fg_color=GREY)
+        home_frame = ctk.CTkFrame(self.content_frame, corner_radius=16, fg_color=WHITE)
         home_frame.grid_rowconfigure(0, weight=0)
         home_frame.grid_rowconfigure(1, weight=0)
         home_frame.grid_rowconfigure(2, weight=1)
