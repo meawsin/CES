@@ -47,7 +47,7 @@ class LoginPage(ctk.CTkFrame):
         subtitle_label.grid(row=1, column=0, columnspan=2, pady=(0, 30), padx=50)
 
         # Email with enhanced styling
-        email_label = ctk.CTkLabel(login_frame, text="📧 Email:",
+        email_label = ctk.CTkLabel(login_frame, text="Email:",
                                    font=ctk.CTkFont(family="Arial", size=18, weight="bold"),
                                    text_color="#2c3e50")
         email_label.grid(row=2, column=0, padx=(50, 10), pady=(15, 8), sticky="w")
@@ -63,7 +63,7 @@ class LoginPage(ctk.CTkFrame):
         self.email_entry.insert(0, "so1ICT@bup.com") # Pre-fill for quick testing
 
         # Password with enhanced styling
-        password_label = ctk.CTkLabel(login_frame, text="🔒 Password:",
+        password_label = ctk.CTkLabel(login_frame, text="Password:",
                                       font=ctk.CTkFont(family="Arial", size=18, weight="bold"),
                                       text_color="#2c3e50")
         password_label.grid(row=4, column=0, padx=(50, 10), pady=(15, 8), sticky="w")
@@ -79,7 +79,7 @@ class LoginPage(ctk.CTkFrame):
         self.password_entry.insert(0, "1234") # Pre-fill for quick testing
 
         # Enhanced Login Button
-        login_button = ctk.CTkButton(login_frame, text="🚀 Login", command=self.handle_login,
+        login_button = ctk.CTkButton(login_frame, text="Login", command=self.handle_login,
                                      font=ctk.CTkFont(family="Arial", size=20, weight="bold"),
                                      height=60, corner_radius=15,
                                      fg_color="#3498db",

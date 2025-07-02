@@ -1,5 +1,6 @@
-import mysql.connector
-from mysql.connector import Error
+import pymysql
+from pymysql.cursors import DictCursor
+from pymysql import Error
 from config import DATABASE_CONFIG
 
 class DBManager:
@@ -12,20 +13,22 @@ class DBManager:
         return cls._instance
 
     def connect(self):
-        """Establishes a database connection."""
-        if self.connection is None or not self.connection.is_connected():
+        """Establishes a database connection using PyMySQL."""
+        if self.connection is None:
             try:
-                self.connection = mysql.connector.connect(**DATABASE_CONFIG)
-                if self.connection.is_connected():
-                    print("Successfully connected to the database.")
+                # Add the cursorclass directly to the connection arguments
+                db_config_with_cursor = DATABASE_CONFIG.copy()
+                db_config_with_cursor['cursorclass'] = DictCursor
+                self.connection = pymysql.connect(**db_config_with_cursor)
+                print("Successfully connected to the database using PyMySQL.")
             except Error as e:
-                print(f"Error connecting to MySQL database: {e}")
+                print(f"Error connecting to MySQL database with PyMySQL: {e}")
                 self.connection = None
         return self.connection
 
     def disconnect(self):
         """Closes the database connection."""
-        if self.connection and self.connection.is_connected():
+        if self.connection:
             self.connection.close()
             print("Database connection closed.")
             self.connection = None
@@ -38,7 +41,7 @@ class DBManager:
 
         cursor = None
         try:
-            cursor = self.connection.cursor(buffered=True)
+            cursor = self.connection.cursor()
             cursor.execute(query, params or ())
             self.connection.commit()
 
@@ -56,14 +59,14 @@ class DBManager:
                 cursor.close()
 
     def fetch_data(self, query, params=None, fetch_one=False, fetch_all=True):
-        """Helper for SELECT queries."""
+        """Helper for SELECT queries that return dictionaries."""
         self.connect()
         if not self.connection:
             return None
 
         cursor = None
         try:
-            cursor = self.connection.cursor(dictionary=True)
+            cursor = self.connection.cursor()
             cursor.execute(query, params or ())
             if fetch_one:
                 return cursor.fetchone()

@@ -1,53 +1,60 @@
 # Admin_side/views/faculty_requests_page.py
-import tkinter as tk
-from tkinter import ttk, messagebox
+import customtkinter as ctk
+from tkinter import messagebox
+from tkinter import ttk
 from controllers.faculty_request_controller import FacultyRequestController
 from controllers.student_controller import StudentController # For fetching student names if needed
 from controllers.course_controller import CourseController # For fetching course names if needed
 import datetime # For timestamping admin comments
 
-class FacultyRequestsPage(tk.Frame):
+BLUE = "#1976d2"
+DARK_BLUE = "#1565c0"
+LIGHT_BLUE = "#e3f2fd"
+GREY = "#f5f6fa"
+DARK_GREY = "#34495e"
+WHITE = "#ffffff"
+CARD_BORDER = "#b0bec5"
+RED = "#e74c3c"
+
+class FacultyRequestsPage(ctk.CTkFrame):
     """
-    A Tkinter frame for administrators to view and manage student faculty requests.
+    A CustomTkinter frame for administrators to view and manage student faculty requests.
     Allows filtering by status and updating request details/status.
     """
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+        super().__init__(parent)
         self.parent_controller = controller
         self.faculty_request_controller = FacultyRequestController()
-
-        self.configure(bg="#ecf0f1")
-        self.columnconfigure(0, weight=1)
-
+        self.configure(fg_color=GREY)
+        self.grid_columnconfigure(0, weight=1)
         self.create_widgets()
         self.load_faculty_requests()
 
     def create_widgets(self):
         """Creates and lays out the widgets for the faculty requests management page."""
-        title_label = ttk.Label(self, text="Manage Faculty Requests",
-                                font=("Arial", 18, "bold"),
-                                background="#ecf0f1",
-                                foreground="#34495e")
-        title_label.pack(pady=10)
-
-        # Filter and Refresh Frame
-        filter_frame = ttk.Frame(self, padding="10")
-        filter_frame.pack(pady=5, fill="x")
-
-        ttk.Label(filter_frame, text="Filter by Status:").pack(side="left", padx=5)
-        self.status_filter_combo = ttk.Combobox(filter_frame, values=["", "pending", "approved", "rejected"], state="readonly", width=15)
-        self.status_filter_combo.set("pending") # Default to show pending requests
-        self.status_filter_combo.pack(side="left", padx=5)
+        title_label = ctk.CTkLabel(self, text="Manage Faculty Requests", font=("Arial", 40, "bold"), text_color=DARK_BLUE)
+        title_label.pack(pady=(18, 8))
+        # Tabs for Pending/Previous Requests
+        self.tabview = ctk.CTkSegmentedButton(self, values=["Pending Requests", "Previous Requests"], command=self.on_tab_change)
+        self.tabview.pack(fill="x", padx=20, pady=(0, 10))
+        # Top action/filter bar
+        top_bar = ctk.CTkFrame(self, fg_color=LIGHT_BLUE, corner_radius=10)
+        top_bar.pack(fill="x", padx=20, pady=(0, 10))
+        ctk.CTkLabel(top_bar, text="Filter by Status:", font=("Arial", 13, "bold"), text_color=DARK_BLUE).pack(side="left", padx=(10, 5), pady=10)
+        self.status_filter_combo = ctk.CTkComboBox(top_bar, values=["", "pending", "approved", "rejected"], width=120, font=("Arial", 13))
+        self.status_filter_combo.set("pending")
+        self.status_filter_combo.pack(side="left", padx=5, pady=10)
         self.status_filter_combo.bind("<<ComboboxSelected>>", self.load_faculty_requests)
-
-        ttk.Button(filter_frame, text="Refresh", command=self.load_faculty_requests, style="General.TButton").pack(side="right", padx=5)
-
-
-        # Requests Treeview (Table)
-        self.tree = ttk.Treeview(self, columns=(
+        ctk.CTkButton(top_bar, text="Refresh", command=self.load_faculty_requests, fg_color=BLUE, hover_color=DARK_BLUE, text_color=WHITE, font=("Arial", 13, "bold"), width=90).pack(side="left", padx=10, pady=10)
+        ctk.CTkButton(top_bar, text="Mark Approved", command=lambda: self.update_selected_request_status('approved'), fg_color="#27ae60", hover_color="#229954", text_color=WHITE, font=("Arial", 13, "bold"), width=120).pack(side="right", padx=5, pady=10)
+        ctk.CTkButton(top_bar, text="Mark Rejected", command=lambda: self.update_selected_request_status('rejected'), fg_color=RED, hover_color="#c0392b", text_color=WHITE, font=("Arial", 13, "bold"), width=120).pack(side="right", padx=5, pady=10)
+        ctk.CTkButton(top_bar, text="Mark Pending", command=lambda: self.update_selected_request_status('pending'), fg_color=BLUE, hover_color=DARK_BLUE, text_color=WHITE, font=("Arial", 13, "bold"), width=120).pack(side="right", padx=5, pady=10)
+        # Table area
+        table_frame = ctk.CTkFrame(self, fg_color=WHITE, corner_radius=12, border_color=CARD_BORDER, border_width=1)
+        table_frame.pack(fill="both", expand=True, padx=20, pady=(0, 0))
+        self.tree = ttk.Treeview(table_frame, columns=(
             "ID", "Student Name", "Course", "Requested Faculty", "Status", "Date Submitted", "Details"
-        ), show="headings")
-
+        ), show="headings", height=12)
         self.tree.heading("ID", text="Request ID")
         self.tree.heading("Student Name", text="Student Name")
         self.tree.heading("Course", text="Course (Code - Name)")
@@ -55,7 +62,6 @@ class FacultyRequestsPage(tk.Frame):
         self.tree.heading("Status", text="Status")
         self.tree.heading("Date Submitted", text="Date Submitted")
         self.tree.heading("Details", text="Details Summary")
-
         self.tree.column("ID", width=80, anchor="center")
         self.tree.column("Student Name", width=120)
         self.tree.column("Course", width=150)
@@ -63,22 +69,25 @@ class FacultyRequestsPage(tk.Frame):
         self.tree.column("Status", width=100, anchor="center")
         self.tree.column("Date Submitted", width=120)
         self.tree.column("Details", width=300)
-
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
+        style = ttk.Style()
+        style.configure("Treeview", font=("Arial", 12), rowheight=32, background=WHITE, fieldbackground=WHITE)
+        style.configure("Treeview.Heading", font=("Arial", 13, "bold"), background=LIGHT_BLUE, foreground=DARK_BLUE)
+        style.map("Treeview", background=[('selected', DARK_BLUE)])
+        scrollbar = ctk.CTkScrollbar(table_frame, orientation="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=scrollbar.set)
+        self.tree.pack(side="left", fill="both", expand=True, padx=(0, 0), pady=10)
+        scrollbar.pack(side="right", fill="y", pady=10)
+        self.tree.bind("<<TreeviewSelect>>", self.show_selected_request_details)
+        # Details panel below table
+        self.details_panel = ctk.CTkFrame(self, fg_color=GREY, corner_radius=10)
+        self.details_panel.pack(fill="x", padx=20, pady=(10, 20))
 
-        self.tree.pack(pady=10, fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
-
-        # Action Buttons Frame
-        action_frame = ttk.Frame(self, padding="10")
-        action_frame.pack(pady=10, fill="x")
-
-        ttk.Button(action_frame, text="View Details / Update", command=self.view_update_request, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(action_frame, text="Mark Approved", command=lambda: self.update_selected_request_status('approved'), style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(action_frame, text="Mark Rejected", command=lambda: self.update_selected_request_status('rejected'), style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(action_frame, text="Mark Pending", command=lambda: self.update_selected_request_status('pending'), style="General.TButton").pack(side="left", padx=5)
-
+    def on_tab_change(self, value):
+        if value == "Pending Requests":
+            self.status_filter_combo.set("pending")
+        else:
+            self.status_filter_combo.set("")
+        self.load_faculty_requests()
 
     def load_faculty_requests(self, event=None):
         """Fetches requests and populates them into the Treeview."""
@@ -86,11 +95,19 @@ class FacultyRequestsPage(tk.Frame):
             self.tree.delete(i)
 
         selected_status = self.status_filter_combo.get()
-        status_filter = selected_status if selected_status != "" else None
+        if self.tabview.get() == "Previous Requests":
+            status_filter = None
+        else:
+            status_filter = selected_status if selected_status != "" else None
         
         requests = self.faculty_request_controller.get_all_faculty_requests(status=status_filter)
 
         for req in requests:
+            # For previous requests tab, only show approved/rejected
+            if self.tabview.get() == "Previous Requests" and req['status'] not in ["approved", "rejected"]:
+                continue
+            if self.tabview.get() == "Pending Requests" and req['status'] != "pending":
+                continue
             short_details = (req['details'][:70] + "...") if len(req['details']) > 70 else req['details']
             
             # Safely get course_code and course_name, fallback to 'N/A' if missing
@@ -107,137 +124,48 @@ class FacultyRequestsPage(tk.Frame):
                 req['created_at'].strftime("%Y-%m-%d %H:%M"),
                 short_details
             ))
+        self.clear_details_panel()
 
-    def view_update_request(self):
-        """Opens a new Toplevel window to display full details of a selected request and allow updating."""
+    def show_selected_request_details(self, event=None):
+        self.clear_details_panel()
         selected_item_id = self.tree.focus()
         if not selected_item_id:
-            messagebox.showwarning("No Selection", "Please select a faculty request to view/update.")
             return
-
         request_id = int(selected_item_id)
         request_data = self.faculty_request_controller.get_faculty_request_by_id(request_id)
-
         if not request_data:
-            messagebox.showerror("Error", "Faculty request not found or could not be retrieved.")
             return
+        # Only show the details summary
+        ctk.CTkLabel(self.details_panel, text="Details Summary:", font=("Arial", 13, "bold"), text_color=DARK_BLUE).pack(anchor="w", pady=(5, 0), padx=5)
+        details_text = ctk.CTkTextbox(self.details_panel, wrap="word", height=3, width=60, font=("Arial", 12), fg_color=WHITE, text_color=DARK_GREY)
+        details_text.pack(fill="x", padx=10, pady=(0, 10))
+        details_text.insert("1.0", request_data.get('details', 'No details available.'))
+        details_text.configure(state="disabled")
 
-        details_window = tk.Toplevel(self.parent_controller.get_root_window())
-        details_window.title(f"Faculty Request Details: {request_data['request_id']}")
-        details_window.transient(self.parent_controller.get_root_window())
-        details_window.grab_set()
-        details_window.geometry("750x700")
+    def clear_details_panel(self):
+        for widget in self.details_panel.winfo_children():
+            widget.destroy()
 
-        details_frame = ttk.Frame(details_window, padding="20")
-        details_frame.pack(fill="both", expand=True)
-        details_frame.grid_columnconfigure(1, weight=1)
-
-        row_idx = 0
-        def add_detail_row(frame, label_text, value_text, row):
-            ttk.Label(frame, text=label_text).grid(row=row, column=0, sticky="w", pady=2, padx=5)
-            ttk.Label(frame, text=value_text, font=("Arial", 10, "bold")).grid(row=row, column=1, sticky="w", pady=2, padx=5)
-            return row + 1
-
-        row_idx = add_detail_row(details_frame, "Request ID:", request_data['request_id'], row_idx)
-        row_idx = add_detail_row(details_frame, "Student:", f"{request_data['student_name']} (ID: {request_data['student_id']})", row_idx)
-        row_idx = add_detail_row(details_frame, "Course:", f"{request_data['course_name']} ({request_data['course_code']})", row_idx)
-        row_idx = add_detail_row(details_frame, "Requested Faculty:", request_data['requested_faculty_name'] if request_data['requested_faculty_name'] else "Any suitable", row_idx)
-        row_idx = add_detail_row(details_frame, "Submitted On:", request_data['created_at'].strftime("%Y-%m-%d %H:%M:%S"), row_idx)
-        row_idx = add_detail_row(details_frame, "Last Updated:", request_data['updated_at'].strftime("%Y-%m-%d %H:%M:%S"), row_idx)
-
-        ttk.Label(details_frame, text="Current Status:").grid(row=row_idx, column=0, sticky="w", pady=2, padx=5)
-        self.current_status_label_dialog = ttk.Label(details_frame, text=request_data['status'].replace('_', ' ').upper(), font=("Arial", 10, "bold"), foreground="blue")
-        self.current_status_label_dialog.grid(row=row_idx, column=1, sticky="w", pady=2, padx=5)
-        row_idx += 1
-
-        ttk.Label(details_frame, text="Student Details:").grid(row=row_idx, column=0, sticky="nw", pady=5, padx=5)
-        details_text = tk.Text(details_frame, wrap="word", height=5, width=60, font=("Arial", 10))
-        details_text.grid(row=row_idx, column=1, sticky="nsew", pady=5, padx=5)
-        details_text.insert("1.0", request_data['details'])
-        details_text.config(state="disabled")
-        row_idx += 1
-
-        ttk.Label(details_frame, text="Admin Comments History:", font=("Arial", 10, "bold")).grid(row=row_idx, column=0, columnspan=2, sticky="w", pady=(10,5), padx=5)
-        row_idx += 1
-
-        admin_comments_text_display = tk.Text(details_frame, wrap="word", height=8, width=60, font=("Arial", 10))
-        admin_comments_text_display.grid(row=row_idx, column=0, columnspan=2, sticky="nsew", pady=5, padx=5)
-        if 'admin_comment' in request_data and request_data['admin_comment']:
-            admin_comments_text_display.insert("1.0", request_data['admin_comment'])
-        else:
-            admin_comments_text_display.insert("1.0", "No admin comments yet.")
-        admin_comments_text_display.config(state="disabled")
-        row_idx += 1
-
-        ttk.Label(details_frame, text="Add New Admin Comment / Update Status Comment:").grid(row=row_idx, column=0, sticky="w", pady=5, padx=5)
-        self.new_admin_comment_entry = ttk.Entry(details_frame, width=50)
-        self.new_admin_comment_entry.grid(row=row_idx, column=1, sticky="ew", pady=5, padx=5)
-        row_idx += 1
-        
-        # Status Change Section
-        ttk.Label(details_frame, text="Change Status To:").grid(row=row_idx, column=0, sticky="w", pady=5, padx=5)
-        self.new_status_combo_dialog = ttk.Combobox(details_frame, values=["pending", "approved", "rejected"], state="readonly", width=20)
-        self.new_status_combo_dialog.set(request_data['status'])
-        self.new_status_combo_dialog.grid(row=row_idx, column=1, sticky="ew", pady=5, padx=5)
-        row_idx += 1
-
-        ttk.Button(details_frame, text="Update Status & Add Comment", command=lambda: self.update_request_status_from_dialog(
-            request_id, admin_comments_text_display, details_window
-        ), style="FormSave.TButton").grid(row=row_idx, column=0, columnspan=2, pady=10)
-        row_idx += 1
-
-        details_window.update_idletasks()
-        parent_x = self.parent_controller.get_root_window().winfo_x()
-        parent_y = self.parent_controller.get_root_window().winfo_y()
-        parent_width = self.parent_controller.get_root_window().winfo_width()
-        parent_height = self.parent_controller.get_root_window().winfo_height()
-
-        self_width = details_window.winfo_width()
-        self_height = details_window.winfo_height()
-
-        x = parent_x + (parent_width // 2) - (self_width // 2)
-        y = parent_y + (parent_height // 2) - (self_height // 2)
-        details_window.geometry(f"{self_width}x{self_height}+{int(x)}+{int(y)}")
-        details_window.lift()
-
-        details_window.protocol("WM_DELETE_WINDOW", details_window.destroy)
-
-    def update_request_status_from_dialog(self, request_id, comments_text_widget, details_window):
-        """
-        Updates the status of a request directly from the detail dialog.
-        """
+    def update_request_status_from_panel(self, request_id, comments_text_widget):
         new_status = self.new_status_combo_dialog.get()
-        admin_comment_text = self.new_admin_comment_entry.get().strip()
-
+        new_comment = self.new_admin_comment_entry.get().strip()
         if not new_status:
-            messagebox.showwarning("Input Error", "Please select a new status.")
+            messagebox.showerror("Validation Error", "Please select a new status.")
             return
-
-        admin_user = self.parent_controller.get_current_user()
-        if not admin_user:
-            messagebox.showerror("Authentication Error", "Admin not logged in. Cannot update request.")
-            return
-        admin_id = admin_user.admin_id
-
-        success, message = self.faculty_request_controller.update_faculty_request_status(
-            request_id, new_status, admin_id, admin_comment_text
-        )
+        success, message = self.faculty_request_controller.update_request_status_and_comment(request_id, new_status, new_comment)
         if success:
             messagebox.showinfo("Success", message)
-            self.current_status_label_dialog.config(text=new_status.replace('_', ' ').upper())
-            self.new_admin_comment_entry.delete(0, tk.END) # Clear comment entry
-
-            # Refresh the comments display in the dialog
+            self.current_status_label_dialog.configure(text=new_status.replace('_', ' ').upper())
+            self.new_admin_comment_entry.delete(0, ctk.CTk.END)
             updated_request = self.faculty_request_controller.get_faculty_request_by_id(request_id)
-            comments_text_widget.config(state="normal")
-            comments_text_widget.delete("1.0", tk.END)
+            comments_text_widget.configure(state="normal")
+            comments_text_widget.delete("1.0", ctk.CTk.END)
             if 'admin_comment' in updated_request and updated_request['admin_comment']:
                 comments_text_widget.insert("1.0", updated_request['admin_comment'])
             else:
-                 comments_text_widget.insert("1.0", "No admin comments yet.")
-            comments_text_widget.config(state="disabled")
-
-            self.load_faculty_requests() # Refresh the main list in the background
+                comments_text_widget.insert("1.0", "No admin comments yet.")
+            comments_text_widget.configure(state="disabled")
+            self.load_faculty_requests()
         else:
             messagebox.showerror("Error", message)
 

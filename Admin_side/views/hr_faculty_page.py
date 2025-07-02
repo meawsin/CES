@@ -1,41 +1,32 @@
 # views/hr_faculty_page.py
 
-import tkinter as tk
-from tkinter import ttk, messagebox
+import customtkinter as ctk
+from tkinter import messagebox, ttk
 from controllers.faculty_controller import FacultyController
 from views.add_faculty_form import AddFacultyForm
 
-class HRFacultyPage(tk.Frame):
+class HRFacultyPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+        ctk.CTkFrame.__init__(self, parent)
         self.parent_controller = controller
         self.faculty_controller = FacultyController()
-
-        self.configure(bg="#ECF0F1")
+        self.configure(fg_color="#ECF0F1")
         self.columnconfigure(0, weight=1)
-
         self.create_widgets()
         self.load_faculty()
 
     def create_widgets(self):
-        title_label = ttk.Label(self, text="Manage Faculty", font=("Arial", 18, "bold"), background="#ECF0F1", foreground="#34495E")
-        title_label.pack(pady=10)
-
-        search_frame = ttk.Frame(self, padding="10")
-        search_frame.pack(pady=5, fill="x")
-        ttk.Label(search_frame, text="Search:").pack(side="left", padx=5)
-        self.search_entry = ttk.Entry(search_frame, width=40)
-        self.search_entry.pack(side="left", padx=5, expand=True, fill="x")
+        title_label = ctk.CTkLabel(self, text="Manage Faculty", font=("Arial", 40, "bold"), text_color="#1565c0")
+        title_label.pack(pady=(18, 8))
+        top_bar = ctk.CTkFrame(self, fg_color="#e3f0fa", corner_radius=10)
+        top_bar.pack(fill="x", padx=20, pady=(0, 10))
+        ctk.CTkLabel(top_bar, text="Search:", font=("Arial", 15, "bold"), text_color="#1565c0").pack(side="left", padx=(10, 5), pady=10)
+        self.search_entry = ctk.CTkEntry(top_bar, width=350, font=("Arial", 15), fg_color="white", text_color="#222b3a")
+        self.search_entry.pack(side="left", padx=10, pady=10)
         self.search_entry.bind("<KeyRelease>", self.filter_faculty)
-
-        button_frame = ttk.Frame(self, padding="10")
-        button_frame.pack(pady=5, fill="x")
-
-        # Use global "General.TButton" style and add icons
-        ttk.Button(button_frame, text="Add Faculty", command=self.open_add_faculty_form, style="General.TButton").pack(side="left", padx=5)
-        # Edit Faculty Button is removed as per previous request
-        ttk.Button(button_frame, text="Delete Faculty", command=self.delete_selected_faculty, style="General.TButton").pack(side="left", padx=5)
-        ttk.Button(button_frame, text="Refresh List", command=self.load_faculty, style="General.TButton").pack(side="right", padx=5)
+        ctk.CTkButton(top_bar, text="Add Faculty", command=self.open_add_faculty_form, fg_color="#1565c0", hover_color="#0d47a1", text_color="white", font=("Arial", 15, "bold"), width=170, height=48).pack(side="right", padx=5, pady=10)
+        ctk.CTkButton(top_bar, text="Delete Faculty", command=self.delete_selected_faculty, fg_color="#e74c3c", hover_color="#c0392b", text_color="white", font=("Arial", 15, "bold"), width=170, height=48).pack(side="right", padx=5, pady=10)
+        ctk.CTkButton(top_bar, text="Refresh List", command=self.load_faculty, fg_color="#1565c0", hover_color="#0d47a1", text_color="white", font=("Arial", 15, "bold"), width=170, height=48).pack(side="right", padx=5, pady=10)
 
         self.tree = ttk.Treeview(self, columns=(
             "ID", "Name", "Email", "Contact No", "DOB", "Gender", "Joining Date"

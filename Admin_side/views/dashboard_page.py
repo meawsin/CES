@@ -6,6 +6,7 @@ from controllers.evaluation_template_controller import EvaluationTemplateControl
 from controllers.student_controller import StudentController
 from controllers.admin_calendar_event_controller import AdminCalendarEventController
 from controllers.faculty_request_controller import FacultyRequestController
+from controllers.complaint_controller import ComplaintController
 # Import sub-pages (will be updated to CustomTkinter in subsequent steps)
 from views.hr_students_page import HRStudentsPage
 from views.hr_faculty_page import HRFacultyPage
@@ -19,6 +20,16 @@ from views.app_settings_page import AppSettingsPage
 from datetime import datetime, date, timedelta
 import calendar
 from tkcalendar import Calendar # Required for the "Add Meeting" date picker (tkcalendar is not ctk)
+
+# --- Color Palette ---
+BLUE = "#1976d2"
+DARK_BLUE = "#1565c0"
+LIGHT_BLUE = "#e3f2fd"
+GREY = "#f5f6fa"
+DARK_GREY = "#34495e"
+WHITE = "#ffffff"
+CARD_BORDER = "#b0bec5"
+RED = "#e74c3c"
 
 class DashboardPage(ctk.CTkFrame):
     """
@@ -34,7 +45,12 @@ class DashboardPage(ctk.CTkFrame):
         self.student_controller = StudentController()
         self.admin_calendar_event_controller = AdminCalendarEventController()
         self.faculty_request_controller = FacultyRequestController()
+        self.complaint_controller = ComplaintController()
         self.admin_user = admin_user
+
+        today = date.today()
+        self.current_calendar_year = today.year
+        self.current_calendar_month = today.month
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=0)
@@ -44,11 +60,8 @@ class DashboardPage(ctk.CTkFrame):
         self.create_content_area()
 
         self.sub_pages = {}
-        # Initialize sub-pages, including HR tabview, but don't show them yet
+        # Initialize sub-pages, including HR tabview, and home content eagerly
         self._initialize_sub_pages() 
-
-        self.current_calendar_year = datetime.now().year
-        self.current_calendar_month = datetime.now().month
 
         self.show_home_content()
 
@@ -160,6 +173,8 @@ class DashboardPage(ctk.CTkFrame):
         self.sub_pages["ComplaintsPage"] = ComplaintsPage(parent=self.content_frame, controller=self.parent_controller)
         self.sub_pages["FacultyRequestsPage"] = FacultyRequestsPage(parent=self.content_frame, controller=self.parent_controller)
         self.sub_pages["AppSettingsPage"] = AppSettingsPage(parent=self.content_frame, controller=self.parent_controller)
+        # Eagerly create home content
+        self.sub_pages["HomeContent"] = self._create_home_content()
 
 
     def show_sub_page(self, page_widget):
@@ -220,10 +235,7 @@ class DashboardPage(ctk.CTkFrame):
     def show_home_content(self):
         """
         Displays the main dashboard home content (info cards, calendar).
-        Creates the home content frame if it doesn't exist.
         """
-        if "HomeContent" not in self.sub_pages:
-            self.sub_pages["HomeContent"] = self._create_home_content()
         self.show_sub_page(self.sub_pages["HomeContent"])
         self.update_dashboard_data()
 
@@ -232,7 +244,7 @@ class DashboardPage(ctk.CTkFrame):
         Creates and lays out the widgets for the dashboard's home content area with enhanced styling.
         Includes info cards, real-time clock, and an interactive calendar.
         """
-        home_frame = ctk.CTkFrame(self.content_frame, corner_radius=16, fg_color="#f8f9fa")
+        home_frame = ctk.CTkFrame(self.content_frame, corner_radius=16, fg_color=GREY)
         home_frame.grid_rowconfigure(0, weight=0)
         home_frame.grid_rowconfigure(1, weight=0)
         home_frame.grid_rowconfigure(2, weight=1)
@@ -240,126 +252,61 @@ class DashboardPage(ctk.CTkFrame):
         home_frame.grid_columnconfigure(1, weight=1)
         home_frame.grid_columnconfigure(2, weight=1)
 
-        # Enhanced Title and Real-time Clock section
-        title_frame = ctk.CTkFrame(home_frame, fg_color="#e3f2fd", corner_radius=12)
+        # Title and clock
+        title_frame = ctk.CTkFrame(home_frame, fg_color=LIGHT_BLUE, corner_radius=12)
         title_frame.grid(row=0, column=0, columnspan=3, pady=(20, 30), padx=20, sticky="ew")
         title_frame.columnconfigure(0, weight=1)
-
-        home_label = ctk.CTkLabel(title_frame, text="Admin Dashboard", font=("Arial", 32, "bold"), 
-                                text_color="#1565c0")
+        home_label = ctk.CTkLabel(title_frame, text="Admin Dashboard", font=("Arial", 32, "bold"), text_color=DARK_BLUE)
         home_label.pack(side="left", pady=20, padx=20)
-
-        self.clock_label = ctk.CTkLabel(title_frame, text="", font=("Arial", 18, "bold"), 
-                                      text_color="#1976d2")
+        self.clock_label = ctk.CTkLabel(title_frame, text="", font=("Arial", 18, "bold"), text_color=BLUE)
         self.clock_label.pack(side="right", pady=20, padx=20)
 
-        # Enhanced Information Cards section
+        # Info cards (reduced height)
         self.info_cards_frame = ctk.CTkFrame(home_frame, fg_color="transparent")
-        self.info_cards_frame.grid(row=1, column=0, columnspan=3, pady=20, padx=20, sticky="ew")
+        self.info_cards_frame.grid(row=1, column=0, columnspan=3, pady=(10, 5), padx=20, sticky="ew")
         self.info_cards_frame.columnconfigure(0, weight=1)
         self.info_cards_frame.columnconfigure(1, weight=1)
         self.info_cards_frame.columnconfigure(2, weight=1)
-
         self.running_evals_card = self._create_info_card(self.info_cards_frame, "Running Evaluations", "0")
-        self.running_evals_card.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
-
+        self.running_evals_card.grid(row=0, column=0, padx=10, pady=5, sticky="nsew")
         self.total_batches_card = self._create_info_card(self.info_cards_frame, "Total Batches", "0")
-        self.total_batches_card.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+        self.total_batches_card.grid(row=0, column=1, padx=10, pady=5, sticky="nsew")
+        self.complaints_card = self._create_info_card(self.info_cards_frame, "Complaints", "0")
+        self.complaints_card.grid(row=0, column=2, padx=10, pady=5, sticky="nsew")
 
-        self.pending_requests_card = self._create_info_card(self.info_cards_frame, "Pending Requests", "0")
-        self.pending_requests_card.grid(row=0, column=2, padx=10, pady=10, sticky="nsew")
-
-        # Enhanced Calendar Section
-        calendar_wrapper_frame = ctk.CTkFrame(home_frame, corner_radius=16, fg_color="#ffffff", border_width=2, border_color="#e0e0e0")
+        # Calendar section
+        calendar_wrapper_frame = ctk.CTkFrame(home_frame, corner_radius=16, fg_color=WHITE, border_width=2, border_color=CARD_BORDER)
         calendar_wrapper_frame.grid(row=2, column=0, columnspan=3, padx=20, pady=20, sticky="nsew")
         calendar_wrapper_frame.grid_rowconfigure(1, weight=1)
         calendar_wrapper_frame.grid_columnconfigure(0, weight=1)
-
-        # Calendar header with enhanced styling
-        calendar_header = ctk.CTkFrame(calendar_wrapper_frame, fg_color="#f5f5f5", corner_radius=12)
-        calendar_header.pack(fill="x", padx=15, pady=15)
-        
-        ctk.CTkLabel(calendar_header, text="Calendar & Events (Fri-Sat: Holidays)", font=("Arial", 24, "bold"), 
-                    text_color="#1565c0").pack(anchor="nw", padx=20, pady=15)
-
         calendar_frame = ctk.CTkFrame(calendar_wrapper_frame, fg_color="transparent")
         calendar_frame.pack(fill="both", expand=True, padx=15, pady=10)
-
-        # Enhanced Calendar Navigation
-        calendar_nav_frame = ctk.CTkFrame(calendar_frame, fg_color="#e8f4fd", corner_radius=10)
+        calendar_nav_frame = ctk.CTkFrame(calendar_frame, fg_color=LIGHT_BLUE, corner_radius=10)
         calendar_nav_frame.pack(pady=10, fill="x", padx=10)
         calendar_nav_frame.columnconfigure(0, weight=1)
-
-        # Navigation buttons with enhanced styling
-        prev_btn = ctk.CTkButton(calendar_nav_frame, text="< Prev", command=self.prev_month, 
-                               width=120, font=("Arial", 16, "bold"), 
-                               fg_color="#3498db", hover_color="#2980b9",
-                               text_color="white", corner_radius=8)
+        prev_btn = ctk.CTkButton(calendar_nav_frame, text="< Prev", command=self.prev_month, width=120, font=("Arial", 16, "bold"), fg_color=BLUE, hover_color=DARK_BLUE, text_color=WHITE, corner_radius=8)
         prev_btn.pack(side="left", padx=15, pady=15)
-        
-        self.month_year_label = ctk.CTkLabel(calendar_nav_frame, text="", font=("Arial", 20, "bold"), 
-                                           text_color="#2c3e50")
+        self.month_year_label = ctk.CTkLabel(calendar_nav_frame, text="", font=("Arial", 20, "bold"), text_color=DARK_BLUE)
         self.month_year_label.pack(side="left", expand=True, fill="x", anchor="center")
-        
-        next_btn = ctk.CTkButton(calendar_nav_frame, text="Next >", command=self.next_month, 
-                               width=120, font=("Arial", 16, "bold"), 
-                               fg_color="#3498db", hover_color="#2980b9",
-                               text_color="white", corner_radius=8)
+        next_btn = ctk.CTkButton(calendar_nav_frame, text="Next >", command=self.next_month, width=120, font=("Arial", 16, "bold"), fg_color=BLUE, hover_color=DARK_BLUE, text_color=WHITE, corner_radius=8)
         next_btn.pack(side="right", padx=15, pady=15)
-        
-        add_event_btn = ctk.CTkButton(calendar_nav_frame, text="Add Event", command=self.open_add_event_form, 
-                                    font=("Arial", 16, "bold"), 
-                                    fg_color="#27ae60", hover_color="#229954",
-                                    text_color="white", corner_radius=8)
+        add_event_btn = ctk.CTkButton(calendar_nav_frame, text="Add Event", command=self.open_add_event_form, font=("Arial", 16, "bold"), fg_color="#27ae60", hover_color="#229954", text_color=WHITE, corner_radius=8)
         add_event_btn.pack(side="right", padx=15, pady=15)
-
-        # Enhanced Calendar Grid
-        self.calendar_grid_frame = ctk.CTkFrame(calendar_frame, border_width=2, corner_radius=12, 
-                                              fg_color="#ffffff", border_color="#e0e0e0")
+        self.calendar_grid_frame = ctk.CTkFrame(calendar_frame, border_width=2, corner_radius=12, fg_color=GREY, border_color=CARD_BORDER)
         self.calendar_grid_frame.pack(pady=15, fill="both", expand=True, padx=10)
-
-        # Enhanced Event Details display area
-        event_details_wrapper_frame = ctk.CTkFrame(calendar_frame, corner_radius=12, 
-                                                 fg_color="#f8f9fa", border_width=1, border_color="#dee2e6")
-        event_details_wrapper_frame.pack(pady=15, fill="x", padx=10)
-        
-        event_header = ctk.CTkLabel(event_details_wrapper_frame, text="Selected Day Events", 
-                                  font=("Arial", 18, "bold"), text_color="#495057")
-        event_header.pack(anchor="nw", padx=15, pady=10)
-
-        self.event_details_text = ctk.CTkTextbox(event_details_wrapper_frame, wrap="word", height=6, 
-                                               font=("Arial", 14), activate_scrollbars=True,
-                                               fg_color="#ffffff", border_width=1, border_color="#ced4da")
-        self.event_details_text.pack(fill="both", expand=True, padx=15, pady=10)
-        self.event_details_text.configure(state="disabled")
-
+        # Event details area (no box, no heading, just a frame)
+        self.event_details_frame = ctk.CTkFrame(calendar_frame, fg_color=GREY, corner_radius=0, border_width=0)
+        self.event_details_frame.pack(pady=10, fill="x", padx=10)
         self.draw_calendar()
-
         return home_frame
 
     def _create_info_card(self, parent, title, value):
-        """
-        Helper method to create a standardized information card for the dashboard with enhanced styling.
-        :param parent: The parent widget.
-        :param title: The title of the card.
-        :param value: The main value to display (e.g., a count).
-        :return: The created card frame.
-        """
-        card_frame = ctk.CTkFrame(parent, corner_radius=16, fg_color="#ffffff", border_width=2, border_color="#e3f2fd")
+        card_frame = ctk.CTkFrame(parent, corner_radius=16, fg_color=WHITE, border_width=2, border_color=CARD_BORDER)
         card_frame.columnconfigure(0, weight=1)
-
-        # Title with enhanced styling
-        title_label = ctk.CTkLabel(card_frame, text=title, 
-                                 font=ctk.CTkFont(family="Arial", size=14, weight="bold"),
-                                 text_color="#1565c0")
+        title_label = ctk.CTkLabel(card_frame, text=title, font=ctk.CTkFont(family="Arial", size=14, weight="bold"), text_color=DARK_BLUE)
         title_label.grid(row=0, column=0, pady=(20, 5), padx=20)
-        
-        # Value with enhanced styling
-        value_label = ctk.CTkLabel(card_frame, text=value,
-                                 font=ctk.CTkFont(family="Arial", size=36, weight="bold"),
-                                 text_color="#1976d2")
+        value_label = ctk.CTkLabel(card_frame, text=value, font=ctk.CTkFont(family="Arial", size=36, weight="bold"), text_color=BLUE)
         value_label.grid(row=1, column=0, pady=(5, 20), padx=20)
-
         card_frame.value_label = value_label
         return card_frame
 
@@ -378,10 +325,11 @@ class DashboardPage(ctk.CTkFrame):
         total_batches_count = self.student_controller.get_total_batches_count()
         self.total_batches_card.value_label.configure(text=str(total_batches_count))
 
-        pending_requests_count = self.faculty_request_controller.get_all_faculty_requests(status='pending')
-        self.pending_requests_card.value_label.configure(text=str(len(pending_requests_count)))
-
-        self.draw_calendar()
+        # Complaints: count pending or in_progress
+        pending_complaints = self.complaint_controller.get_all_complaints(status='pending')
+        ongoing_complaints = self.complaint_controller.get_all_complaints(status='in_progress')
+        complaints_count = len(pending_complaints) + len(ongoing_complaints)
+        self.complaints_card.value_label.configure(text=str(complaints_count))
 
         self.after(60000, self.update_dashboard_data)
 
@@ -416,7 +364,7 @@ class DashboardPage(ctk.CTkFrame):
         self.month_year_label.configure(text=datetime(self.current_calendar_year, self.current_calendar_month, 1).strftime("%B %Y"))
 
         # Set soft gray background for the calendar area
-        self.calendar_grid_frame.configure(fg_color="#f5f6fa")
+        self.calendar_grid_frame.configure(fg_color=GREY)
 
         # Track selected day (persist across redraws)
         if not hasattr(self, 'selected_calendar_day') or self.selected_calendar_day is None:
@@ -431,7 +379,7 @@ class DashboardPage(ctk.CTkFrame):
         day_names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
         for i, day_name in enumerate(day_names):
             color = "#e74c3c" if i in [5, 6] else "#222"
-            day_header = ctk.CTkLabel(self.calendar_grid_frame, text=day_name, font=("SF Pro Display", 17, "bold"), text_color=color, fg_color="#f5f6fa")
+            day_header = ctk.CTkLabel(self.calendar_grid_frame, text=day_name, font=("SF Pro Display", 17, "bold"), text_color=color, fg_color=GREY)
             day_header.grid(row=0, column=i, sticky="nsew", padx=6, pady=(0, 8))
             self.calendar_grid_frame.grid_columnconfigure(i, weight=1)
 
@@ -446,6 +394,9 @@ class DashboardPage(ctk.CTkFrame):
 
         row_offset = 1
         self._calendar_day_frames = {}  # For selection highlight
+        # All calendar cells same size
+        cell_width = 48
+        cell_height = 48
         for week in month_days:
             for col_idx, day_num in enumerate(week):
                 is_holiday = col_idx in [5, 6]
@@ -464,28 +415,27 @@ class DashboardPage(ctk.CTkFrame):
                         border_color = "#1976d2"
                         border_width = 2
                 # Outer frame for spacing
-                outer = ctk.CTkFrame(self.calendar_grid_frame, fg_color="#f5f6fa")
-                outer.grid(row=row_offset, column=col_idx, sticky="nsew", padx=6, pady=6)
+                outer = ctk.CTkFrame(self.calendar_grid_frame, fg_color=GREY)
+                outer.grid(row=row_offset, column=col_idx, sticky="nsew", padx=4, pady=4)
                 outer.grid_rowconfigure(0, weight=1)
                 outer.grid_columnconfigure(0, weight=1)
                 # Day cell
-                day_frame = ctk.CTkFrame(outer, fg_color=cell_bg, corner_radius=18, border_color=border_color, border_width=border_width)
+                day_frame = ctk.CTkFrame(outer, fg_color=cell_bg, corner_radius=14, border_color=border_color, border_width=border_width, width=cell_width, height=cell_height)
                 day_frame.grid(row=0, column=0, sticky="nsew")
-                day_frame.grid_rowconfigure(0, weight=1)
-                day_frame.grid_rowconfigure(1, weight=1)
-                day_frame.grid_columnconfigure(0, weight=1)
+                day_frame.grid_propagate(False)
                 if day_num != 0:
-                    # Today: blue filled circle with white text
+                    # Add more padding inside the cell
+                    inner_pad = 8
                     if is_today:
-                        circle = ctk.CTkLabel(day_frame, text=str(day_num), font=("SF Pro Display", 20, "bold"), text_color="#fff", fg_color="#1976d2", width=36, height=36, corner_radius=18)
-                        circle.grid(row=0, column=0, pady=(12,0), sticky="n")
+                        circle = ctk.CTkLabel(day_frame, text=str(day_num), font=("SF Pro Display", 18, "bold"), text_color=WHITE, fg_color=BLUE, width=32, height=32, corner_radius=16)
+                        circle.grid(row=0, column=0, pady=(inner_pad,0), padx=inner_pad, sticky="n")
                     else:
-                        day_label = ctk.CTkLabel(day_frame, text=str(day_num), font=("SF Pro Display", 20, "bold"), text_color="#222" if not is_holiday else "#e74c3c", fg_color=cell_bg)
-                        day_label.grid(row=0, column=0, pady=(12,0), sticky="n")
+                        day_label = ctk.CTkLabel(day_frame, text=str(day_num), font=("SF Pro Display", 18, "bold"), text_color="#222" if not is_holiday else RED, fg_color=cell_bg)
+                        day_label.grid(row=0, column=0, pady=(inner_pad,0), padx=inner_pad, sticky="n")
                     # Event dot
                     if day_num in events_by_date:
-                        dot = ctk.CTkLabel(day_frame, text="•", font=("Arial", 18), text_color="#1976d2", fg_color=cell_bg)
-                        dot.grid(row=1, column=0, pady=(0,10), sticky="n")
+                        dot = ctk.CTkLabel(day_frame, text="•", font=("Arial", 16), text_color=BLUE, fg_color=cell_bg)
+                        dot.grid(row=1, column=0, pady=(0,inner_pad), padx=inner_pad, sticky="n")
                     # Make the whole cell clickable
                     def make_onclick(day):
                         return lambda e: self._on_calendar_day_click(day, events_by_date.get(day, []))
@@ -547,26 +497,19 @@ class DashboardPage(ctk.CTkFrame):
 
 
     def show_day_events(self, selected_date, events):
-        """
-        Displays the details of events for a selected day in the text area below the calendar.
-        :param selected_date: The datetime.date object of the selected day.
-        :param events: A list of event objects for that day.
-        """
-        self.event_details_text.configure(state="normal")
-        self.event_details_text.delete("1.0", ctk.END)
-
+        # Clear previous widgets
+        for widget in self.event_details_frame.winfo_children():
+            widget.destroy()
         if events:
-            event_text = f"Events for {selected_date.strftime('%Y-%m-%d')}:\n"
             for event in events:
-                event_text += f"- {event.title}"
+                title_label = ctk.CTkLabel(self.event_details_frame, text=event.title, font=("Arial", 15, "bold"), text_color=RED, fg_color=GREY)
+                title_label.pack(anchor="w", pady=(0, 0), padx=5)
                 if event.description:
-                    event_text += f": {event.description}"
-                event_text += "\n"
-            self.event_details_text.insert("1.0", event_text)
+                    desc_label = ctk.CTkLabel(self.event_details_frame, text=event.description, font=("Arial", 13), text_color=DARK_GREY, fg_color=GREY, wraplength=500, justify="left")
+                    desc_label.pack(anchor="w", pady=(0, 8), padx=20)
         else:
-            self.event_details_text.insert("1.0", f"No events for {selected_date.strftime('%Y-%m-%d')}.")
-
-        self.event_details_text.configure(state="disabled")
+            no_event_label = ctk.CTkLabel(self.event_details_frame, text="No events for this day.", font=("Arial", 13, "italic"), text_color=DARK_GREY, fg_color=GREY)
+            no_event_label.pack(anchor="w", pady=5, padx=5)
 
 
     def open_add_event_form(self):
@@ -574,137 +517,43 @@ class DashboardPage(ctk.CTkFrame):
         Opens a new CTkToplevel window (form) to allow the admin to add a new calendar event.
         Includes a date picker (tkcalendar) for easy date selection with enhanced styling.
         """
+        from tkcalendar import Calendar
         add_event_window = ctk.CTkToplevel(self.parent_controller.get_root_window())
         add_event_window.title("Add New Calendar Event")
         add_event_window.transient(self.parent_controller.get_root_window())
         add_event_window.grab_set()
-        add_event_window.geometry("600x500")
-
-        # Enhanced form styling
-        form_frame = ctk.CTkFrame(add_event_window, padding="30", fg_color="#f8f9fa", corner_radius=16)
-        form_frame.pack(fill="both", expand=True, padx=20, pady=20)
-
-        # Title with enhanced styling
-        title_label = ctk.CTkLabel(form_frame, text="Add New Event", font=("Arial", 24, "bold"), 
-                                 text_color="#1565c0")
-        title_label.grid(row=0, column=0, columnspan=3, pady=(0, 30), sticky="ew")
-
-        # Event Title field
-        ctk.CTkLabel(form_frame, text="Event Title:", font=("Arial", 16, "bold"), 
-                    text_color="#2c3e50").grid(row=1, column=0, padx=15, pady=15, sticky="w")
-        title_entry = ctk.CTkEntry(form_frame, width=400, height=40, font=("Arial", 14),
-                                 fg_color="#ffffff", border_color="#ced4da", border_width=2,
-                                 corner_radius=8)
-        title_entry.grid(row=1, column=1, columnspan=2, padx=15, pady=15, sticky="ew")
-
-        # Description field
-        ctk.CTkLabel(form_frame, text="Description:", font=("Arial", 16, "bold"), 
-                    text_color="#2c3e50").grid(row=2, column=0, padx=15, pady=15, sticky="w")
-        description_text = ctk.CTkTextbox(form_frame, wrap="word", height=120, width=400,
-                                        font=("Arial", 14), fg_color="#ffffff", 
-                                        border_color="#ced4da", border_width=2,
-                                        corner_radius=8)
-        description_text.grid(row=2, column=1, columnspan=2, padx=15, pady=15, sticky="ew")
-
-        # Event Date field
-        ctk.CTkLabel(form_frame, text="Event Date:", font=("Arial", 16, "bold"), 
-                    text_color="#2c3e50").grid(row=3, column=0, padx=15, pady=15, sticky="w")
-        date_entry = ctk.CTkEntry(form_frame, width=250, height=40, font=("Arial", 14),
-                                fg_color="#ffffff", border_color="#ced4da", border_width=2,
-                                corner_radius=8)
-        date_entry.grid(row=3, column=1, padx=15, pady=15, sticky="ew")
-
-        def _open_calendar_picker(target_entry):
-            cal_win = ctk.CTkToplevel(add_event_window)
-            cal_win.title("📅 Select Date")
-            cal_win.transient(add_event_window)
-            cal_win.grab_set()
-            cal_win.geometry("400x350")
-
-            # Enhanced calendar window styling
-            cal_frame = ctk.CTkFrame(cal_win, fg_color="#f8f9fa", corner_radius=16)
-            cal_frame.pack(fill="both", expand=True, padx=20, pady=20)
-
-            ctk.CTkLabel(cal_frame, text="📅 Select Event Date", font=("Arial", 20, "bold"), 
-                        text_color="#1565c0").pack(pady=20)
-
-            initial_date = None
-            try:
-                current_date_str = target_entry.get().strip()
-                if current_date_str:
-                    initial_date = datetime.strptime(current_date_str, "%Y-%m-%d").date()
-            except ValueError:
-                pass
-
-            cal = Calendar(cal_frame, selectmode='day',
-                           date_pattern='y-mm-dd',
-                           year=initial_date.year if initial_date else datetime.now().year,
-                           month=initial_date.month if initial_date else datetime.now().month,
-                           day=initial_date.day if initial_date else datetime.now().day,
-                           font=("Arial", 12),
-                           selectbackground="#3498db",
-                           selectforeground="white",
-                           normalbackground="#ffffff",
-                           normalforeground="#2c3e50",
-                           weekendbackground="#f8f9fa",
-                           weekendforeground="#e74c3c")
-            cal.pack(pady=20)
-
-            def on_date_select(selected_date_str):
-                target_entry.delete(0, ctk.END)
-                target_entry.insert(0, selected_date_str)
-                cal_win.destroy()
-            
-            # Enhanced select button
-            select_btn = ctk.CTkButton(cal_frame, text="✅ Select Date", command=lambda: on_date_select(cal.get_date()),
-                                     font=("Arial", 16, "bold"), fg_color="#27ae60", hover_color="#229954",
-                                     text_color="white", corner_radius=8, height=40)
-            select_btn.pack(pady=20)
-            
-            cal_win.update_idletasks()
-            center_x = add_event_window.winfo_x() + add_event_window.winfo_width() // 2 - cal_win.winfo_width() // 2
-            center_y = add_event_window.winfo_y() + add_event_window.winfo_height() // 2 - cal_win.winfo_height() // 2
-            cal_win.geometry(f"+{int(center_x)}+{int(center_y)}")
-
-            cal_win.protocol("WM_DELETE_WINDOW", cal_win.destroy)
-
-        # Enhanced calendar picker button
-        calendar_btn = ctk.CTkButton(form_frame, text="📅", width=50, height=40, 
-                                   command=lambda: _open_calendar_picker(date_entry),
-                                   font=("Arial", 18), fg_color="#3498db", hover_color="#2980b9",
-                                   text_color="white", corner_radius=8)
-        calendar_btn.grid(row=3, column=2, padx=15, pady=15, sticky="e")
-
-
+        add_event_window.geometry("480x480")
+        form_frame = ctk.CTkFrame(add_event_window, fg_color=GREY, corner_radius=0)
+        form_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        title_label = ctk.CTkLabel(form_frame, text="Add New Event", font=("Arial", 20, "bold"), text_color=DARK_BLUE)
+        title_label.grid(row=0, column=0, columnspan=3, pady=(0, 20), sticky="ew")
+        ctk.CTkLabel(form_frame, text="Event Title:", font=("Arial", 14, "bold"), text_color=DARK_BLUE).grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        title_entry = ctk.CTkEntry(form_frame, width=300, height=32, font=("Arial", 12), fg_color=WHITE, text_color=DARK_BLUE, border_color=CARD_BORDER, border_width=1, corner_radius=8)
+        title_entry.grid(row=1, column=1, columnspan=2, padx=10, pady=10, sticky="ew")
+        ctk.CTkLabel(form_frame, text="Description:", font=("Arial", 14, "bold"), text_color=DARK_BLUE).grid(row=2, column=0, padx=10, pady=10, sticky="w")
+        description_text = ctk.CTkTextbox(form_frame, wrap="word", height=60, width=300, font=("Arial", 12), fg_color=WHITE, text_color=DARK_BLUE, border_color=CARD_BORDER, border_width=1, corner_radius=8)
+        description_text.grid(row=2, column=1, columnspan=2, padx=10, pady=10, sticky="ew")
+        ctk.CTkLabel(form_frame, text="Event Date:", font=("Arial", 14, "bold"), text_color=DARK_BLUE).grid(row=3, column=0, padx=10, pady=10, sticky="w")
+        cal = Calendar(form_frame, selectmode='day', date_pattern='y-mm-dd', font=("Arial", 11), selectbackground=BLUE, selectforeground=WHITE, normalbackground=WHITE, normalforeground=DARK_BLUE, weekendbackground=GREY, weekendforeground=RED)
+        cal.grid(row=3, column=1, padx=10, pady=10, sticky="ew")
         def save_event():
             title = title_entry.get().strip()
             description = description_text.get("1.0", ctk.END).strip()
-            event_date_str = date_entry.get().strip()
-
+            event_date_str = cal.get_date()
             if not title or not event_date_str:
                 messagebox.showerror("Validation Error", "Event Title and Event Date are required.")
                 return
-
             try:
                 event_date_obj = datetime.strptime(event_date_str, "%Y-%m-%d").date()
             except ValueError:
-                messagebox.showerror("Input Error", "Invalid Date format. Please useYYYY-MM-DD.")
+                messagebox.showerror("Input Error", "Invalid Date format. Please use YYYY-MM-DD.")
                 return
-            
             admin_id = self.admin_user.admin_id if self.admin_user else None
             if not admin_id:
                 messagebox.showerror("Error", "Admin user not logged in. Cannot add event.")
                 return
-
             from models.admin_calendar_event_model import AdminCalendarEvent
-            new_event = AdminCalendarEvent(
-                event_id=None,
-                title=title,
-                description=description,
-                event_date=event_date_obj,
-                admin_id=admin_id
-            )
-            
+            new_event = AdminCalendarEvent(event_id=None, title=title, description=description, event_date=event_date_obj, admin_id=admin_id)
             success = self.admin_calendar_event_controller.add_event(new_event)
             if success:
                 messagebox.showinfo("Success", "Event added successfully.")
@@ -712,18 +561,12 @@ class DashboardPage(ctk.CTkFrame):
                 self.draw_calendar()
             else:
                 messagebox.showerror("Error", "Failed to add event. A database error might have occurred.")
-
-        # Enhanced save button
-        save_btn = ctk.CTkButton(form_frame, text="✅ Save Event", command=save_event,
-                               font=("Arial", 18, "bold"), fg_color="#27ae60", hover_color="#229954",
-                               text_color="white", corner_radius=12, height=50)
-        save_btn.grid(row=4, column=0, columnspan=3, pady=30, padx=20, sticky="ew")
-
+        save_btn = ctk.CTkButton(form_frame, text="Save Event", command=save_event, font=("Arial", 15, "bold"), fg_color="#27ae60", hover_color="#229954", text_color=WHITE, corner_radius=8, height=36)
+        save_btn.grid(row=4, column=0, columnspan=3, pady=20, padx=10, sticky="ew")
         add_event_window.update_idletasks()
         center_x = self.parent_controller.get_root_window().winfo_x() + self.parent_controller.get_root_window().winfo_width() // 2 - add_event_window.winfo_width() // 2
         center_y = self.parent_controller.get_root_window().winfo_y() + self.parent_controller.get_root_window().winfo_height() // 2 - add_event_window.winfo_height() // 2
         add_event_window.geometry(f"+{int(center_x)}+{int(center_y)}")
-
         add_event_window.protocol("WM_DELETE_WINDOW", add_event_window.destroy)
         self.parent_controller.get_root_window().wait_window(add_event_window)
 
@@ -751,7 +594,7 @@ class DashboardPage(ctk.CTkFrame):
         """
         if self.admin_user and self.admin_user.can_manage_users:
             self.show_sub_page(self.hr_tabview)
-            self.hr_tabview.set_active_tab("Students")
+            self.hr_tabview.set("Students")
         else:
             messagebox.showwarning("Permission Denied", "You do not have permission to manage users.")
 

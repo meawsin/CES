@@ -45,47 +45,31 @@ class AppSettingsPage(ctk.CTkFrame): # Changed from tk.Frame
         self.auto_logout_entry.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
         self.auto_logout_entry.insert(0, "30") # Default value shown in the entry field
 
-        # Theme Selector
-        ctk.CTkLabel(settings_frame, text="Application Theme:").grid(row=1, column=0, padx=10, pady=10, sticky="w")
-        self.theme_optionmenu = ctk.CTkOptionMenu(settings_frame, values=["Light", "Dark"]) # Changed from ttk.Combobox
-        self.theme_optionmenu.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
-        self.theme_optionmenu.set("Light") # Default value
-
-        settings_frame.grid_columnconfigure(1, weight=1) # Allow the entry field and optionmenu to expand
+        settings_frame.grid_columnconfigure(1, weight=1) # Allow the entry field to expand
 
         # Save Settings Button
-        save_button = ctk.CTkButton(settings_frame, text="Save Settings ✅", command=self.save_settings) # Changed from ttk.Button
-        save_button.grid(row=2, column=0, columnspan=2, pady=20)
+        save_button = ctk.CTkButton(settings_frame, text="Save Settings", command=self.save_settings) # Changed from ttk.Button
+        save_button.grid(row=1, column=0, columnspan=2, pady=20)
 
     def load_settings(self):
-        """
-        Loads the current auto-logout and theme settings for the logged-in admin
-        and populates the input fields.
-        """
         current_settings = self.app_settings_controller.get_admin_settings(self.admin_user.admin_id)
         if current_settings:
             # If settings exist, populate the entry with the saved value
             self.auto_logout_entry.delete(0, ctk.END) # Changed from tk.END
             self.auto_logout_entry.insert(0, str(current_settings.auto_logout_minutes))
-            self.theme_optionmenu.set(current_settings.theme.capitalize()) # Set theme, capitalize for display
         else:
             # If no personalized settings exist, inform the user (defaults are already in place in widgets)
             messagebox.showinfo("Settings", "No personalized settings found. Using defaults.")
 
-
     def save_settings(self):
         """
-        Validates the input for auto-logout minutes and theme, and saves it to the database.
-        Notifies the main application controller to update the auto-logout interval and apply theme.
+        Validates the input for auto-logout minutes and saves it to the database.
+        Notifies the main application controller to update the auto-logout interval.
         """
         auto_logout_minutes_str = self.auto_logout_entry.get().strip()
-        selected_theme = self.theme_optionmenu.get().lower() # Get selected theme, convert to lowercase for DB
-
-        # Input validation
         if not auto_logout_minutes_str:
             messagebox.showerror("Validation Error", "Auto logout minutes is required.")
             return
-
         try:
             auto_logout_minutes = int(auto_logout_minutes_str)
             if auto_logout_minutes <= 0:
@@ -93,21 +77,15 @@ class AppSettingsPage(ctk.CTkFrame): # Changed from tk.Frame
         except ValueError as e:
             messagebox.showerror("Input Error", f"Invalid auto logout minutes: {e}")
             return
-
-        # Create an AppSettings object with the new values
         new_settings = AppSettings(
             admin_id=self.admin_user.admin_id,
             auto_logout_minutes=auto_logout_minutes,
-            theme=selected_theme # Pass the selected theme
+            theme=None # Theme is no longer used
         )
-
-        # Save settings via the controller
         success, message = self.app_settings_controller.save_admin_settings(new_settings)
-
         if success:
             messagebox.showinfo("Success", message)
-            # Notify the main application controller to update its internal auto-logout interval and theme
-            self.parent_controller.update_auto_logout_interval() # This method in main.py will now also apply the theme
+            self.parent_controller.update_auto_logout_interval()
         else:
             messagebox.showerror("Error", message)
 
