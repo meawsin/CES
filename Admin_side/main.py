@@ -122,7 +122,7 @@ class CourseEvaluationApp(ctk.CTk):
             settings = self.app_settings_controller.get_admin_settings(user.admin_id)
             if settings:
                 self.auto_logout_interval_minutes = settings.auto_logout_minutes
-                self.apply_theme(settings.theme) # Apply user's saved theme
+                self.apply_theme("Light") # Always use Light theme
             else:
                 self.auto_logout_interval_minutes = 30
                 self.apply_theme("Light") # Default to light theme if no settings found
@@ -182,8 +182,8 @@ class CourseEvaluationApp(ctk.CTk):
             settings = self.app_settings_controller.get_admin_settings(self.current_user.admin_id)
             if settings:
                 self.auto_logout_interval_minutes = settings.auto_logout_minutes
-                self.apply_theme(settings.theme)
-                print(f"Auto-logout interval updated to {self.auto_logout_interval_minutes} minutes and theme applied: {settings.theme}.")
+                self.apply_theme("Light")
+                print(f"Auto-logout interval updated to {self.auto_logout_interval_minutes} minutes and theme applied: Light.")
             else:
                 print("Could not retrieve updated settings for auto-logout.")
 

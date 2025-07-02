@@ -109,7 +109,6 @@ class LoginPage(ctk.CTkFrame):
         if admin_user:
             self.error_label.configure(text="")
             self.parent_controller.set_current_user(admin_user)
-            messagebox.showinfo("Login Success", f"Welcome, {admin_user.name}!")
             self.parent_controller.show_page("DashboardPage", admin_user)
         else:
             self.error_label.configure(text="Invalid email or password.")

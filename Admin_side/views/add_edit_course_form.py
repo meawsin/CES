@@ -1,92 +1,61 @@
 # views/add_edit_course_form.py
-import tkinter as tk
-from tkinter import ttk, messagebox
+import customtkinter as ctk
 from models.course_model import Course # Assuming Course model is defined
 from datetime import datetime # Import datetime for potential date handling if needed
 
-class AddEditCourseForm(tk.Toplevel):
+BLUE = "#1976d2"
+DARK_BLUE = "#1565c0"
+LIGHT_BLUE = "#e3f2fd"
+GREY = "#f5f6fa"
+WHITE = "#ffffff"
+CARD_BORDER = "#b0bec5"
+
+class AddEditCourseForm(ctk.CTkToplevel):
     def __init__(self, parent_window, course_controller, refresh_callback, course_to_edit=None):
         super().__init__(parent_window)
         self.course_controller = course_controller
         self.refresh_callback = refresh_callback
         self.course_to_edit = course_to_edit
-
-        if self.course_to_edit:
-            self.title("Edit Course Information")
-        else:
-            self.title("Add New Course")
-
-        # Robust Toplevel setup
-        self.transient(parent_window)
-        self.grab_set()
-
-        # Create widgets first to allow geometry calculation
+        self.title("Edit Course Information" if self.course_to_edit else "Add New Course")
+        self.geometry("500x400")
+        self.configure(fg_color=GREY)
         self.create_widgets()
-
         if self.course_to_edit:
             self.load_course_data()
-        
-        # Set initial focus (e.g., on the course code entry)
         if "course_code" in self.entries and self.entries['course_code'].cget('state') == 'normal':
             self.entries['course_code'].focus_set()
         elif "name" in self.entries and self.entries['name'].cget('state') == 'normal':
             self.entries['name'].focus_set()
-
-
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
-
-        # Crucial step: Update idletasks to ensure the window has finalized its size
-        self.update_idletasks()
-
-        # Recalculate position to center the Toplevel over its parent
-        parent_x = parent_window.winfo_x()
-        parent_y = parent_window.winfo_y()
-        parent_width = parent_window.winfo_width()
-        parent_height = parent_window.winfo_height()
-
-        self_width = self.winfo_width()
-        self_height = self.winfo_height()
-
-        x = parent_x + (parent_width // 2) - (self_width // 2)
-        y = parent_y + (parent_height // 2) - (self_height // 2)
-
-        self.geometry(f"{self_width}x{self_height}+{int(x)}+{int(y)}")
+        # Ensure the window stays on top and grabs focus
+        self.lift()
+        self.focus_force()
+        self.attributes('-topmost', True)
 
     def create_widgets(self):
-        form_frame = ttk.Frame(self, padding="20")
-        form_frame.pack(fill="both", expand=True)
-
-        # Configure columns for a responsive two-column layout
-        form_frame.columnconfigure(0, weight=0) # Labels column
-        form_frame.columnconfigure(1, weight=1) # Input fields column (expands)
-
-        self.entries = {} # Dictionary to hold references to entry widgets
-
-        # Course Code field
-        ttk.Label(form_frame, text="Course Code:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.entries['course_code'] = ttk.Entry(form_frame, width=30)
-        self.entries['course_code'].grid(row=0, column=1, padx=5, pady=5, sticky="ew")
-        # Do NOT set state="disabled" here directly. Handle it in load_course_data or after widgets are fully created.
-        # This allows initial insertion to always work without timing issues.
-
-        # Course Name field
-        ttk.Label(form_frame, text="Course Name:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
-        self.entries['name'] = ttk.Entry(form_frame, width=30)
-        self.entries['name'].grid(row=1, column=1, padx=5, pady=5, sticky="ew")
-
-        # Status Combobox
-        ttk.Label(form_frame, text="Status:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
-        self.entries['status'] = ttk.Combobox(form_frame, values=["ongoing", "finished", "upcoming"], state="readonly")
-        self.entries['status'].grid(row=2, column=1, padx=5, pady=5, sticky="ew")
-        self.entries['status'].set("ongoing") # Default value
-
-        # Save Button styling - Using global style from main.py
-        self.style = ttk.Style()
-        self.style.configure("FormSave.TButton", foreground="black", background="#28a745", font=("Arial", 10, "bold"), padding=5)
-        self.style.map("FormSave.TButton", background=[('active', '#218838')])
-
-        save_button = ttk.Button(form_frame, text="Save", command=self.save_course, style="FormSave.TButton")
-        save_button.grid(row=3, column=0, columnspan=2, pady=20, sticky="ew")
+        card = ctk.CTkFrame(self, fg_color=WHITE, corner_radius=16, border_color=CARD_BORDER, border_width=2)
+        card.pack(padx=30, pady=30, fill="both", expand=True)
+        ctk.CTkLabel(card, text=self.title(), font=("Arial", 28, "bold"), text_color=DARK_BLUE).pack(pady=(18, 10))
+        form_frame = ctk.CTkFrame(card, fg_color=WHITE)
+        form_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        self.entries = {}
+        row = 0
+        def add_field(label, key, state="normal"):
+            ctk.CTkLabel(form_frame, text=label, font=("Arial", 17), text_color=DARK_BLUE).grid(row=row, column=0, sticky="w", pady=8, padx=5)
+            entry = ctk.CTkEntry(form_frame, width=260, font=("Arial", 17))
+            entry.grid(row=row, column=1, sticky="ew", pady=8, padx=5)
+            entry.configure(state=state)
+            self.entries[key] = entry
+        add_field("Course Code:", "course_code", state="disabled" if self.course_to_edit else "normal"); row += 1
+        add_field("Course Name:", "name"); row += 1
+        ctk.CTkLabel(form_frame, text="Status:", font=("Arial", 17), text_color=DARK_BLUE).grid(row=row, column=0, sticky="w", pady=8, padx=5)
+        status_combo = ctk.CTkComboBox(form_frame, values=["ongoing", "finished", "upcoming"], font=("Arial", 17), width=260)
+        status_combo.grid(row=row, column=1, sticky="ew", pady=8, padx=5)
+        status_combo.set("ongoing")
+        self.entries['status'] = status_combo
+        row += 1
+        ctk.CTkButton(card, text="Save", command=self.save_course, fg_color=BLUE, hover_color=DARK_BLUE, text_color=WHITE, font=("Arial", 19, "bold"), height=45, corner_radius=10).pack(pady=18)
+        form_frame.grid_columnconfigure(1, weight=1)
 
     def load_course_data(self):
         """Loads existing course data into the form fields for editing."""
@@ -96,11 +65,11 @@ class AddEditCourseForm(tk.Toplevel):
             course_code_entry = self.entries['course_code']
             
             # Insert the course code and make it read-only (not disabled) for better visibility
-            course_code_entry.delete(0, tk.END)
+            course_code_entry.delete(0, "end")
             course_code_entry.insert(0, self.course_to_edit.course_code)
-            course_code_entry.config(state='readonly')  # Read-only instead of disabled for better visibility
+            course_code_entry.configure(state='readonly')  # Read-only instead of disabled for better visibility
 
-            self.entries['name'].delete(0, tk.END)
+            self.entries['name'].delete(0, "end")
             self.entries['name'].insert(0, self.course_to_edit.name)
             self.entries['status'].set(self.course_to_edit.status)
 
@@ -129,16 +98,16 @@ class AddEditCourseForm(tk.Toplevel):
 
             # Basic validation
             if not course_code:
-                messagebox.showerror("Validation Error", "Course Code is required.")
+                ctk.CTkMessagebox.show_error("Validation Error", "Course Code is required.")
                 return
             if not name:
-                messagebox.showerror("Validation Error", "Course Name is required.")
+                ctk.CTkMessagebox.show_error("Validation Error", "Course Name is required.")
                 return
             if not status:
-                messagebox.showerror("Validation Error", "Status is required.")
+                ctk.CTkMessagebox.show_error("Validation Error", "Status is required.")
                 return
             if status not in ["ongoing", "finished", "upcoming"]:
-                messagebox.showerror("Validation Error", "Invalid Status selected.")
+                ctk.CTkMessagebox.show_error("Validation Error", "Invalid Status selected.")
                 return
 
             new_course = Course(
@@ -161,15 +130,15 @@ class AddEditCourseForm(tk.Toplevel):
                 action = "added"
 
             if success:
-                messagebox.showinfo("Success", f"Course {action} successfully!")
+                ctk.CTkMessagebox.show_info("Success", f"Course {action} successfully!")
                 self.refresh_callback()
                 self.on_closing()
             else:
-                messagebox.showerror("Error", f"Failed to {action} course. This might be due to a duplicate course code or database issues. Please check logs.")
+                ctk.CTkMessagebox.show_error("Error", f"Failed to {action} course. This might be due to a duplicate course code or database issues. Please check logs.")
                 print(f"DEBUG: Course {action} failed. Database operation returned False.")
 
         except Exception as e:
-            messagebox.showerror("Error", f"An unexpected error occurred during course save: {e}")
+            ctk.CTkMessagebox.show_error("Error", f"An unexpected error occurred during course save: {e}")
             print(f"UNHANDLED EXCEPTION IN save_course: {e}")
             import traceback
             traceback.print_exc()
@@ -177,5 +146,6 @@ class AddEditCourseForm(tk.Toplevel):
 
     def on_closing(self):
         """Handle the window closing event."""
+        self.attributes('-topmost', False)
         self.destroy()
 

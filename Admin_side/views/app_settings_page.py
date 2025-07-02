@@ -79,8 +79,7 @@ class AppSettingsPage(ctk.CTkFrame): # Changed from tk.Frame
             return
         new_settings = AppSettings(
             admin_id=self.admin_user.admin_id,
-            auto_logout_minutes=auto_logout_minutes,
-            theme=None # Theme is no longer used
+            auto_logout_minutes=auto_logout_minutes
         )
         success, message = self.app_settings_controller.save_admin_settings(new_settings)
         if success:
