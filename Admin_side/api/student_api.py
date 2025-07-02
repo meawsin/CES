@@ -259,10 +259,10 @@ def submit_evaluation():
         # Mark evaluation as complete in the evaluation_completion table
         # Handle null course_code for batch/session-only evaluations
         if course_code:
-        existing_completion = db_manager.fetch_data(
-            "SELECT id FROM evaluation_completion WHERE template_id = %s AND course_code = %s AND student_id = %s",
-            (template_id, course_code, student_id), fetch_one=True
-        )
+            existing_completion = db_manager.fetch_data(
+                "SELECT id FROM evaluation_completion WHERE template_id = %s AND course_code = %s AND student_id = %s",
+                (template_id, course_code, student_id), fetch_one=True
+            )
         else:
             # For evaluations without course_code, use NULL in the query
             existing_completion = db_manager.fetch_data(
