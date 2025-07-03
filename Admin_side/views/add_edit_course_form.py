@@ -2,6 +2,7 @@
 import customtkinter as ctk
 from models.course_model import Course # Assuming Course model is defined
 from datetime import datetime # Import datetime for potential date handling if needed
+from tkinter import messagebox
 
 BLUE = "#1976d2"
 DARK_BLUE = "#1565c0"
@@ -98,16 +99,16 @@ class AddEditCourseForm(ctk.CTkToplevel):
 
             # Basic validation
             if not course_code:
-                ctk.CTkMessagebox.show_error("Validation Error", "Course Code is required.")
+                messagebox.showerror("Validation Error", "Course Code is required.")
                 return
             if not name:
-                ctk.CTkMessagebox.show_error("Validation Error", "Course Name is required.")
+                messagebox.showerror("Validation Error", "Course Name is required.")
                 return
             if not status:
-                ctk.CTkMessagebox.show_error("Validation Error", "Status is required.")
+                messagebox.showerror("Validation Error", "Status is required.")
                 return
             if status not in ["ongoing", "finished", "upcoming"]:
-                ctk.CTkMessagebox.show_error("Validation Error", "Invalid Status selected.")
+                messagebox.showerror("Validation Error", "Invalid Status selected.")
                 return
 
             new_course = Course(
@@ -130,15 +131,15 @@ class AddEditCourseForm(ctk.CTkToplevel):
                 action = "added"
 
             if success:
-                ctk.CTkMessagebox.show_info("Success", f"Course {action} successfully!")
+                messagebox.showinfo("Success", f"Course {action} successfully!")
                 self.refresh_callback()
                 self.on_closing()
             else:
-                ctk.CTkMessagebox.show_error("Error", f"Failed to {action} course. This might be due to a duplicate course code or database issues. Please check logs.")
+                messagebox.showerror("Error", f"Failed to {action} course. This might be due to a duplicate course code or database issues. Please check logs.")
                 print(f"DEBUG: Course {action} failed. Database operation returned False.")
 
         except Exception as e:
-            ctk.CTkMessagebox.show_error("Error", f"An unexpected error occurred during course save: {e}")
+            messagebox.showerror("Error", f"An unexpected error occurred during course save: {e}")
             print(f"UNHANDLED EXCEPTION IN save_course: {e}")
             import traceback
             traceback.print_exc()

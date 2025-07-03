@@ -294,3 +294,9 @@ class StudentController:
                 "comment": eval_data['comment']
             }
         return None
+
+    def get_all_batches(self):
+        """Fetches all unique batch names from the students table."""
+        query = "SELECT DISTINCT batch FROM students WHERE batch IS NOT NULL AND batch != '' ORDER BY batch;"
+        result = self.db.fetch_data(query, fetch_all=True)
+        return [row['batch'] for row in result if row['batch']]
